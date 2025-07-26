@@ -7,6 +7,7 @@ import TileLayer from '@arcgis/core/layers/TileLayer.js';
 import Basemap from "@arcgis/core/Basemap.js"
 
 import { hospitals } from './data/hospitals.js';
+import { generalHospitals } from './data/generalHospitals.js';
 import incidents from './data/incidents.js';
 import patientTmpls from './data/patients.js';
 import { FlashingIncidentLayer } from './flashingIncidentLayer.js';
@@ -15,6 +16,8 @@ import { solveODPair, computeScore } from './routeService.js';
 
 import { createServiceArea } from './serviceArea.js';
 import Point from "@arcgis/core/geometry/Point.js";
+import * as geometryEngine from "@arcgis/core/geometry/geometryEngine.js";
+import Graphic from "@arcgis/core/Graphic.js";
 
 /* ── 1.  API key (covers basemap + OD) ───────────────────── */
 esriConfig.apiKey =
@@ -84,19 +87,26 @@ map.add(routeLayer);
 const serviceAreaLayer = new GraphicsLayer({ title: 'Service Area' });
 map.add(serviceAreaLayer);
 
+const generalHospitalsLayer = new GraphicsLayer({ title: 'General Hospitals' });
+map.add(generalHospitalsLayer);
+
 const point = new Point({
   longitude: incident.lon,
   latitude: incident.lat,
   spatialReference: { wkid: 4326 }
 });
 
-createServiceArea({point: point, serviceAreaLayer: serviceAreaLayer, view: view})
+createServiceArea({point: point, serviceAreaLayer: serviceAreaLayer, view: view}).then(serviceAreaPolygons => {
+  queryHospitalsInServiceArea(serviceAreaPolygons, generalHospitalsLayer);
+});
 
 view.when(() => {
   view.on("click", async (event) => {
     const point = event.mapPoint;
 
-    createServiceArea({point: point, serviceAreaLayer: serviceAreaLayer, view: view, size: 8})
+    createServiceArea({point: point, serviceAreaLayer: serviceAreaLayer, view: view, size: 8}).then(serviceAreaPolygons => {
+      queryHospitalsInServiceArea(serviceAreaPolygons, generalHospitalsLayer);
+    });
   });
 });
 
@@ -205,6 +215,79 @@ map.add(sbcLayer);
 
 map.add(incidentLayer);
 
+
+function queryHospitalsInServiceArea(serviceAreaPolygons, generalHospitalsLayer) {
+  // Clear existing general hospitals
+  generalHospitalsLayer.removeAll();
+  
+  if (!serviceAreaPolygons || serviceAreaPolygons.length === 0) {
+    return;
+  }
+  
+  // Get the outermost polygon (largest break value)
+  const outermostPolygon = serviceAreaPolygons.reduce((outermost, polygon) => {
+    const currentBreak = polygon.attributes.ToBreak;
+    const outermostBreak = outermost ? outermost.attributes.ToBreak : 0;
+    return currentBreak > outermostBreak ? polygon : outermost;
+  });
+
+  
+  if (!outermostPolygon) {
+    return;
+  }
+  
+  // Convert general hospitals to points and check if they're within the service area
+  const hospitalsInArea = generalHospitals.filter(hospital => {
+    const hospitalPoint = new Point({
+      longitude: hospital.lon,
+      latitude: hospital.lat,
+      spatialReference: { wkid: 4326 }
+    });    
+    // Check if the hospital point is within the outermost service area polygon
+    return geometryEngine.contains(outermostPolygon.geometry, hospitalPoint);
+  });
+  
+  console.log(`Found ${hospitalsInArea.length} general hospitals within service area`);
+  
+  // Add hospitals to the layer
+  hospitalsInArea.forEach(hospital => {
+    const hospitalGraphic = new Graphic({
+      geometry: webMercatorUtils.geographicToWebMercator({
+        x: hospital.lon,
+        y: hospital.lat,
+        spatialReference: { wkid: 4326 },
+        type: 'point'
+      }),
+      symbol: {
+        type: "simple-marker",
+        style: "circle",
+        color: [255, 255, 255, 0.8], // White with transparency
+        size: 8,
+        outline: {
+          color: [0, 0, 0, 0.8],
+          width: 1
+        }
+      },
+      attributes: {
+        NAME: hospital.name,
+        PHONE: hospital.phone,
+        CATEGORY: hospital.category,
+        ADDRESS: hospital.address
+      },
+      popupTemplate: {
+        title: "{NAME}",
+        content: `
+          <ul>
+            <li><b>Phone:</b> {PHONE}</li>
+            <li><b>Category:</b> {CATEGORY}</li>
+            <li><b>Address:</b> {ADDRESS}</li>
+          </ul>`
+      }
+    });
+    
+    generalHospitalsLayer.add(hospitalGraphic);
+  });
+}
 
 function expandPatients (manifest, templates) {
   const lut = Object.fromEntries(templates.map(t => [t.id, t]));

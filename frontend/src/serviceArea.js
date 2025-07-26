@@ -67,8 +67,14 @@ export async function createServiceArea({point, serviceAreaLayer, view, size=0})
     
         serviceAreaLayer.add(polygon);
       });
+      
+      // Return the service area polygons for further processing
+      return result.serviceAreaPolygons.features;
       }
     } catch (err) {
       console.error("Service area error:", err);
+      return [];
     }
+    
+    return [];
 }
