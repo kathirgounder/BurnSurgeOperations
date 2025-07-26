@@ -1,20 +1,20 @@
-import esriConfig from '@arcgis/core/config.js';
-import Map from '@arcgis/core/Map.js';
-import MapView from '@arcgis/core/views/MapView.js';
-import GraphicsLayer from '@arcgis/core/layers/GraphicsLayer.js';
-import * as webMercatorUtils from '@arcgis/core/geometry/support/webMercatorUtils.js';
-import TileLayer from '@arcgis/core/layers/TileLayer.js';
-import Basemap from "@arcgis/core/Basemap.js"
+import esriConfig from "@arcgis/core/config.js";
+import Map from "@arcgis/core/Map.js";
+import MapView from "@arcgis/core/views/MapView.js";
+import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer.js";
+import * as webMercatorUtils from "@arcgis/core/geometry/support/webMercatorUtils.js";
+import TileLayer from "@arcgis/core/layers/TileLayer.js";
+import Basemap from "@arcgis/core/Basemap.js";
 
-import { hospitals } from './data/hospitals.js';
-import { generalHospitals } from './data/generalHospitals.js';
-import incidents from './data/incidents.js';
-import patientTmpls from './data/patients.js';
-import { FlashingIncidentLayer } from './flashingIncidentLayer.js';
-import { CrossLayer } from './breathingCrossLayer.js';
-import { solveODPair, computeScore } from './routeService.js';
+import { hospitals } from "./data/hospitals.js";
+import { generalHospitals } from "./data/generalHospitals.js";
+import incidents from "./data/incidents.js";
+import patientTmpls from "./data/patients.js";
+import { FlashingIncidentLayer } from "./flashingIncidentLayer.js";
+import { CrossLayer } from "./breathingCrossLayer.js";
+import { solveODPair, computeScore } from "./routeService.js";
 
-import { createServiceArea } from './serviceArea.js';
+import { createServiceArea } from "./serviceArea.js";
 import Point from "@arcgis/core/geometry/Point.js";
 import * as geometryEngine from "@arcgis/core/geometry/geometryEngine.js";
 import Graphic from "@arcgis/core/Graphic.js";
@@ -41,15 +41,15 @@ const incidentGraphic = {
     x: incident.lon,
     y: incident.lat,
     spatialReference: { wkid: 4326 },
-    type: 'point'
+    type: "point",
   }),
   attributes: {
     NAME: incident.name,
     // shove anything else you want to use in the shader / popup:
-    ID      : incident.id,
+    ID: incident.id,
     DATETIME: incident.datetime,
-    SEVERITY: incident.severity
-  }
+    SEVERITY: incident.severity,
+  },
 };
 
 // Create an instance of the custom layer with 4 initial graphics.
@@ -57,14 +57,14 @@ const incidentLayer = new FlashingIncidentLayer({
   pulseFreq: 5,
   coreRadius: 8.0,
   glowRadius: 24.0,
-  sparkAmpl:  0.10,    // obvious crackle
-  sparkFreq:  60.0,     // rapid shimmer
+  sparkAmpl: 0.1, // obvious crackle
+  sparkFreq: 60.0, // rapid shimmer
   sizePx: 70,
   popupTemplate: {
-    title: '{NAME}',
-    content: 'Severity: {SEVERITY}.'
+    title: "{NAME}",
+    content: "Severity: {SEVERITY}.",
   },
-  graphics: [incidentGraphic]
+  graphics: [incidentGraphic],
 });
 
 const hillshade = new TileLayer({
@@ -84,7 +84,7 @@ const view = new MapView({
   container: "viewDiv",
   map,
   center: [incident.lon, incident.lat, 34.1],
-  zoom: 11
+  zoom: 11,
 });
 
 // Pick Incident
@@ -108,14 +108,15 @@ map.add(routeLayer);
 //   },
 // }));
 // Create an instance of the custom layer with 4 initial graphics.
-const incidentLayer = new CustomLayer({
-  popupTemplate: {
-    title: "Flashing Incident Layer",
-    content: "Population: {POPULATION}.",
-  },
-  graphics: gs,
-  
-const serviceAreaLayer = new GraphicsLayer({ title: 'Service Area' });
+// const incidentLayer = new CustomLayer({
+//   popupTemplate: {
+//     title: "Flashing Incident Layer",
+//     content: "Population: {POPULATION}.",
+//   },
+//   graphics: gs,
+// })
+
+const serviceAreaLayer = new GraphicsLayer({ title: "Service Area" });
 map.add(serviceAreaLayer);
 
 const generalHospitalsLayer = new CrossLayer({
@@ -127,30 +128,34 @@ const generalHospitalsLayer = new CrossLayer({
         <li><b>Burn capability:</b> {capability}%</li>
         <li><b>Pediatric unit:</b> {peds}</li>
         <li><b>Tele‑burn enabled:</b> {tele}</li>
-      </ul>`
+      </ul>`,
   },
-  sizePx     : 70,
+  sizePx: 70,
 
-  coreRadius : 12,         // arm length 18 px
-  armWidth   : 0.06,       // 0.13 × 70 ≈ 9 px bar thickness
-  glowRadius : 18,
+  coreRadius: 12, // arm length 18 px
+  armWidth: 0.06, // 0.13 × 70 ≈ 9 px bar thickness
+  glowRadius: 18,
 
-  pulseFreq  : 0.6,
-  sparkAmpl  : 0.03,
-  sparkFreq  : 15,
+  pulseFreq: 0.6,
+  sparkAmpl: 0.03,
+  sparkFreq: 15,
 
   coreColor: [0.98, 0.62, 0.21],
-  glowColor: [0.55, 0.33, 0.05]
+  glowColor: [0.55, 0.33, 0.05],
 });
 map.add(generalHospitalsLayer);
 
 const point = new Point({
   longitude: incident.lon,
   latitude: incident.lat,
-  spatialReference: { wkid: 4326 }
+  spatialReference: { wkid: 4326 },
 });
 
-createServiceArea({point: point, serviceAreaLayer: serviceAreaLayer, view: view}).then(serviceAreaPolygons => {
+createServiceArea({
+  point: point,
+  serviceAreaLayer: serviceAreaLayer,
+  view: view,
+}).then((serviceAreaPolygons) => {
   queryHospitalsInServiceArea(serviceAreaPolygons, generalHospitalsLayer);
 });
 
@@ -165,7 +170,6 @@ createServiceArea({point: point, serviceAreaLayer: serviceAreaLayer, view: view}
 //   });
 // });
 
-
 // const incidentgs = incident.map(i => ({
 //   geometry: webMercatorUtils.geographicToWebMercator({
 //     x: i.lon,
@@ -179,37 +183,41 @@ createServiceArea({point: point, serviceAreaLayer: serviceAreaLayer, view: view}
 //   }
 // }));
 
-const sbcgs = hospitals.filter(h => h.type === "Burn Center").map(h => ({
-  geometry: webMercatorUtils.geographicToWebMercator({
-    x: h.lon, 
-    y: h.lat,
-    spatialReference: { wkid: 4326},
-    type: 'point'
-  }),
-  attributes: {
-    NAME:           h.name,
-    beds:           h.bedsAvailable ?? "n/a",
-    capability:     Math.round(h.capability * 100),    // 95 → 95 %
-    peds:           h.hasPedsUnit ? "Yes" : "No",
-    tele:           h.hasTeleBurn ? "Yes" : "No"
-  }
-}))
+const sbcgs = hospitals
+  .filter((h) => h.type === "Burn Center")
+  .map((h) => ({
+    geometry: webMercatorUtils.geographicToWebMercator({
+      x: h.lon,
+      y: h.lat,
+      spatialReference: { wkid: 4326 },
+      type: "point",
+    }),
+    attributes: {
+      NAME: h.name,
+      beds: h.bedsAvailable ?? "n/a",
+      capability: Math.round(h.capability * 100), // 95 → 95 %
+      peds: h.hasPedsUnit ? "Yes" : "No",
+      tele: h.hasTeleBurn ? "Yes" : "No",
+    },
+  }));
 
-const brcgs = hospitals.filter(h => h.type === "Burn Resource Center").map(h => ({
-  geometry: webMercatorUtils.geographicToWebMercator({
-    x: h.lon, 
-    y: h.lat,
-    spatialReference: { wkid: 4326},
-    type: 'point'
-  }),
-  attributes: {
-    NAME:           h.name,
-    beds:           h.bedsAvailable ?? "n/a",
-    capability:     Math.round(h.capability * 100),
-    peds:           h.hasPedsUnit ? "Yes" : "No",
-    tele:           h.hasTeleBurn ? "Yes" : "No"
-  }
-}))
+const brcgs = hospitals
+  .filter((h) => h.type === "Burn Resource Center")
+  .map((h) => ({
+    geometry: webMercatorUtils.geographicToWebMercator({
+      x: h.lon,
+      y: h.lat,
+      spatialReference: { wkid: 4326 },
+      type: "point",
+    }),
+    attributes: {
+      NAME: h.name,
+      beds: h.bedsAvailable ?? "n/a",
+      capability: Math.round(h.capability * 100),
+      peds: h.hasPedsUnit ? "Yes" : "No",
+      tele: h.hasTeleBurn ? "Yes" : "No",
+    },
+  }));
 
 const brcLayer = new CrossLayer({
   popupTemplate: {
@@ -220,21 +228,21 @@ const brcLayer = new CrossLayer({
         <li><b>Burn capability:</b> {capability}%</li>
         <li><b>Pediatric unit:</b> {peds}</li>
         <li><b>Tele‑burn enabled:</b> {tele}</li>
-      </ul>`
+      </ul>`,
   },
-  sizePx     : 70,
+  sizePx: 70,
 
-  coreRadius : 12,         // arm length 18 px
-  armWidth   : 0.06,       // 0.13 × 70 ≈ 9 px bar thickness
-  glowRadius : 18,
+  coreRadius: 12, // arm length 18 px
+  armWidth: 0.06, // 0.13 × 70 ≈ 9 px bar thickness
+  glowRadius: 18,
 
-  pulseFreq  : 0.6,
-  sparkAmpl  : 0.03,
-  sparkFreq  : 15,
+  pulseFreq: 0.6,
+  sparkAmpl: 0.03,
+  sparkFreq: 15,
 
-  coreColor  : [0.36, 0.42, 0.86],
-  glowColor  : [0.20, 0.25, 0.57],
-  graphics   : brcgs
+  coreColor: [0.36, 0.42, 0.86],
+  glowColor: [0.2, 0.25, 0.57],
+  graphics: brcgs,
 });
 map.add(brcLayer);
 
@@ -247,37 +255,38 @@ const sbcLayer = new CrossLayer({
         <li><b>Burn capability:</b> {capability}%</li>
         <li><b>Pediatric unit:</b> {peds}</li>
         <li><b>Tele‑burn enabled:</b> {tele}</li>
-      </ul>`
+      </ul>`,
   },
-  sizePx     : 70,
+  sizePx: 70,
 
-  coreRadius : 12,         // arm length 18 px
-  armWidth   : 0.06,       // 0.13 × 70 ≈ 9 px bar thickness
-  glowRadius : 18,
+  coreRadius: 12, // arm length 18 px
+  armWidth: 0.06, // 0.13 × 70 ≈ 9 px bar thickness
+  glowRadius: 18,
 
-  pulseFreq  : 0.6,
-  sparkAmpl  : 0.03,
-  sparkFreq  : 15,
+  pulseFreq: 0.6,
+  sparkAmpl: 0.03,
+  sparkFreq: 15,
 
-  coreColor  : [0.22, 0.76, 0.84],
-  glowColor  : [0.12, 0.48, 0.55],
-  graphics   : sbcgs
+  coreColor: [0.22, 0.76, 0.84],
+  glowColor: [0.12, 0.48, 0.55],
+  graphics: sbcgs,
 });
 
 map.add(sbcLayer);
 
-
-
 map.add(incidentLayer);
 
-function queryHospitalsInServiceArea(serviceAreaPolygons, generalHospitalsLayer) {
+function queryHospitalsInServiceArea(
+  serviceAreaPolygons,
+  generalHospitalsLayer
+) {
   // Clear existing general hospitals
   generalHospitalsLayer.removeAll();
-  
+
   if (!serviceAreaPolygons || serviceAreaPolygons.length === 0) {
     return;
   }
-  
+
   // Get the outermost polygon (largest break value)
   const outermostPolygon = serviceAreaPolygons.reduce((outermost, polygon) => {
     const currentBreak = polygon.attributes.ToBreak;
@@ -285,32 +294,33 @@ function queryHospitalsInServiceArea(serviceAreaPolygons, generalHospitalsLayer)
     return currentBreak > outermostBreak ? polygon : outermost;
   });
 
-  
   if (!outermostPolygon) {
     return;
   }
-  
+
   // Convert general hospitals to points and check if they're within the service area
-  const hospitalsInArea = generalHospitals.filter(hospital => {
+  const hospitalsInArea = generalHospitals.filter((hospital) => {
     const hospitalPoint = new Point({
       longitude: hospital.lon,
       latitude: hospital.lat,
-      spatialReference: { wkid: 4326 }
-    });    
+      spatialReference: { wkid: 4326 },
+    });
     // Check if the hospital point is within the outermost service area polygon
     return geometryEngine.contains(outermostPolygon.geometry, hospitalPoint);
   });
-  
-  console.log(`Found ${hospitalsInArea.length} general hospitals within service area`);
-  
+
+  console.log(
+    `Found ${hospitalsInArea.length} general hospitals within service area`
+  );
+
   // Add hospitals to the layer
-  hospitalsInArea.forEach(hospital => {
+  hospitalsInArea.forEach((hospital) => {
     const hospitalGraphic = new Graphic({
       geometry: webMercatorUtils.geographicToWebMercator({
         x: hospital.lon,
         y: hospital.lat,
         spatialReference: { wkid: 4326 },
-        type: 'point'
+        type: "point",
       }),
       // symbol: {
       //   type: "simple-marker",
@@ -326,7 +336,7 @@ function queryHospitalsInServiceArea(serviceAreaPolygons, generalHospitalsLayer)
         NAME: hospital.name,
         PHONE: hospital.phone,
         CATEGORY: hospital.category,
-        ADDRESS: hospital.address
+        ADDRESS: hospital.address,
       },
       popupTemplate: {
         title: "{NAME}",
@@ -335,17 +345,17 @@ function queryHospitalsInServiceArea(serviceAreaPolygons, generalHospitalsLayer)
             <li><b>Phone:</b> {PHONE}</li>
             <li><b>Category:</b> {CATEGORY}</li>
             <li><b>Address:</b> {ADDRESS}</li>
-          </ul>`
-      }
+          </ul>`,
+      },
     });
-    
+
     generalHospitalsLayer.add(hospitalGraphic);
   });
 }
 
-function expandPatients (manifest, templates) {
-  const lut = Object.fromEntries(templates.map(t => [t.id, t]));
-  return manifest.flatMap(stub =>
+function expandPatients(manifest, templates) {
+  const lut = Object.fromEntries(templates.map((t) => [t.id, t]));
+  return manifest.flatMap((stub) =>
     Array.from({ length: stub.count }, (_, i) => ({
       ...lut[stub.template],
       uid: `${stub.template}-${i + 1}`,
@@ -629,27 +639,27 @@ async function run() {
       console.log("Scored");
       console.log(scored);
 
-// Make a dictionary of destId and minutes pairs
-/* Travel Times from Incident to Destination Hospital 1 * 13 OD Matrix Essentially */
-// const travelByDest = {};
+      // Make a dictionary of destId and minutes pairs
+      /* Travel Times from Incident to Destination Hospital 1 * 13 OD Matrix Essentially */
+      // const travelByDest = {};
 
-// results.forEach(r => {
-//   if (r.status === 'fulfilled') {
-//     const { destName, minutes } = r.value;
+      // results.forEach(r => {
+      //   if (r.status === 'fulfilled') {
+      //     const { destName, minutes } = r.value;
 
-//     if (!destName) {
-//       console.warn('Route returned no destId', r.value);
-//       return;
-//     }
-//     if (!Number.isFinite(minutes)) {
-//       console.warn('Bad minutes for', destName, r.value);
-//       return;
-//     }
-//     travelByDest[destName] = minutes;
-//   } else {
-//     console.error('Route failed:', r.reason);
-//   }
-// });
+      //     if (!destName) {
+      //       console.warn('Route returned no destId', r.value);
+      //       return;
+      //     }
+      //     if (!Number.isFinite(minutes)) {
+      //       console.warn('Bad minutes for', destName, r.value);
+      //       return;
+      //     }
+      //     travelByDest[destName] = minutes;
+      //   } else {
+      //     console.error('Route failed:', r.reason);
+      //   }
+      // });
 
       return {
         patientId: p.uid,
@@ -737,16 +747,19 @@ async function highlightRouteFor(row, btn) {
     });
 
     // dark halo
-    routeLayer.add(new Graphic({
-      geometry: route.geometry,
-      symbol: {                   // black outline layer
-        type: "simple-line",
-        color: [0, 0, 0, 1],    // solid black
-        width: 5,
-        cap: "round",
-        join: "round"
-      }
-    }));
+    routeLayer.add(
+      new Graphic({
+        geometry: route.geometry,
+        symbol: {
+          // black outline layer
+          type: "simple-line",
+          color: [0, 0, 0, 1], // solid black
+          width: 5,
+          cap: "round",
+          join: "round",
+        },
+      })
+    );
 
     routeLayer.add({
       geometry: route.geometry,
@@ -852,13 +865,13 @@ function buildReportHTML(rows) {
 
 function addReportButton(rows) {
   // Create the button
-  const btn = document.createElement('button');
-  btn.textContent = 'Generate Report';
-  btn.style.cssText = 'position:absolute;top:10px;left:10px;z-index:9999';
+  const btn = document.createElement("button");
+  btn.textContent = "Generate Report";
+  btn.style.cssText = "position:absolute;top:10px;left:10px;z-index:9999";
 
   // Create loading overlay
-  const loadingOverlay = document.createElement('div');
-  loadingOverlay.textContent = 'Generating Report...';
+  const loadingOverlay = document.createElement("div");
+  loadingOverlay.textContent = "Generating Report...";
   loadingOverlay.style.cssText = `
     position: fixed;
     top: 0; left: 0;
@@ -881,26 +894,26 @@ function addReportButton(rows) {
     incidentName: incident.name,
     incidentDate: incident.datetime,
     incidentNotes: incident.notes,
-    patients: rows.map(r => ({
+    patients: rows.map((r) => ({
       patientId: r.patientId,
       severity: r.severity,
       bestDest: r.bestDest,
       minutes: r.minutes,
-      score: r.score
+      score: r.score,
     })),
-    generatedAt: new Date().toISOString()
+    generatedAt: new Date().toISOString(),
   };
 
   btn.onclick = async () => {
-    loadingOverlay.style.display = 'flex'; // Show loading
+    loadingOverlay.style.display = "flex"; // Show loading
     try {
       console.log(jsonOutput);
-      const response = await fetch('http://127.0.0.1:8000/generate-report/', {
-        method: 'POST',
+      const response = await fetch("http://127.0.0.1:8000/generate-report/", {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(jsonOutput)
+        body: JSON.stringify(jsonOutput),
       });
 
       if (!response.ok) {
@@ -908,17 +921,15 @@ function addReportButton(rows) {
       }
 
       const htmlString = await response.json();
-      const blob = new Blob([htmlString.message], { type: 'text/html' });
-      window.open(URL.createObjectURL(blob), '_blank');
+      const blob = new Blob([htmlString.message], { type: "text/html" });
+      window.open(URL.createObjectURL(blob), "_blank");
     } catch (err) {
-      console.error('Error generating report:', err);
-      alert('Failed to generate report.');
+      console.error("Error generating report:", err);
+      alert("Failed to generate report.");
     } finally {
-      loadingOverlay.style.display = 'none'; // Hide loading
+      loadingOverlay.style.display = "none"; // Hide loading
     }
   };
 
   document.body.appendChild(btn);
 }
-
-addReportButton(assignments);
