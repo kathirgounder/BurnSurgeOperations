@@ -26,6 +26,30 @@ export default [
     notes: "Fast‑moving canyon fire with limited local burn resources."
   },
   {
+    id: "attack‑spacex‑long‑beach",
+    name: "SpaceX Long Beach Plant Explosion",
+    lat: 33.7582,
+    lon: -118.2053,
+    datetime: "2025-07-27T13:30:00-07:00",
+    patients: [
+      { template: "adult‑mod",     count: 3 },
+      { template: "adult‑severe",  count: 3 }
+    ],
+    notes: "Sabotage blast in methane‑tank area; thick smoke and flash burns among workers."
+  },
+  {
+    id: "attack‑anduril‑costa‑mesa",
+    name: "Anduril HQ Drone Strike",
+    lat: 33.6540,
+    lon: -117.8827,
+    datetime: "2025-07-27T10:45:00-07:00",
+    patients: [
+      { template: "adult‑mod",     count: 4 },
+      { template: "adult‑severe",  count: 2 }
+    ],
+    notes: "Precision drone explodes over Anduril Industries campus (Costa Mesa Technology Corridor)."
+  },
+  {
     id: "fire‑raytheon‑fullerton",
     name: "Raytheon Microelectronics Clean‑Room Flash",
     lat: 33.8633,
