@@ -351,7 +351,7 @@ function buildReportHTML (rows) {
 function addReportButton (rows) {
   const btn = document.createElement('button');
   btn.textContent = 'Generate Report';
-  btn.style.cssText = 'position:absolute;top:30px;left:30px;z-index:9999';
+  btn.style.cssText = 'position:absolute;top:100px;left:10px;z-index:9999';
   btn.onclick = () => {
     const blob = new Blob([buildReportHTML(rows)], { type: 'text/html' });
     window.open(URL.createObjectURL(blob), '_blank');
