@@ -76,6 +76,10 @@ varying vec2  v_offset;                // (‑0.5 … +0.5)
 uniform vec3 u_core_color;
 uniform vec3 u_glow_color;
 uniform float u_pulse_freq;
+uniform float u_core_radius;
+uniform float u_glow_radius;
+uniform float u_spark_ampl;
+uniform float u_spark_freq;
 
 // ── STYLE PARAMETERS ─────────────────────────────────────────────
 const float SIZE_PX      = 70.0;           // ↔ must match vertex SIZE
@@ -100,13 +104,13 @@ void main(void)
     float r = length(v_offset) * SIZE_PX;
 
     // 2) base disc (hard centre, anti‑aliased edge)
-    float core = 1.0 - smoothstep(CORE_RADIUS - 1.0,
-                                  CORE_RADIUS + 1.0,
+    float core = 1.0 - smoothstep(u_core_radius - 1.0,
+                                  u_core_radius + 1.0,
                                   r);
 
     // 3) soft halo
-    float glow = exp( -pow( max(r - CORE_RADIUS, 0.0) /
-                            (GLOW_RADIUS - CORE_RADIUS), 2.0) );
+    float glow = exp( -pow( max(r - u_core_radius, 0.0) /
+                            (u_glow_radius - u_core_radius), 2.0) );
 
     // 4) smooth global pulse (every fragment in this point brightens together)
     float pulse = 1.0 + PULSE_AMPL *
@@ -115,8 +119,8 @@ void main(void)
     // 5) light, desynchronised sparkle (one value per point, not per pixel)
     //    – converts INT vec2 to one number by flooring the quad’s screen coords
     float rnd  = hashp(floor(gl_FragCoord.xy / 128.0));
-    float spark = 1.0 + SPARK_AMPL * sin(u_current_time * 60.0 + rnd * 6.28318);
-
+    // float spark = 1.0 + u_spark_ampl * sin(u_current_time * 60.0 + rnd * 6.28318);
+    float spark = 1.0 + u_spark_ampl * sin(u_current_time * 6.28318 * u_spark_freq + rnd * 6.28318);
     // 6) compose brightness
     float a = clamp(core + glow, 0.0, 1.0) * pulse * spark;
 
@@ -158,6 +162,11 @@ void main(void)
     this.uCoreColor = gl.getUniformLocation(this.program, 'u_core_color');
     this.uGlowColor = gl.getUniformLocation(this.program, 'u_glow_color');
     this.uPulseFreq   = gl.getUniformLocation(this.program, 'u_pulse_freq');
+    this.uCoreRadius  = gl.getUniformLocation(this.program, 'u_core_radius');
+    this.uGlowRadius  = gl.getUniformLocation(this.program, 'u_glow_radius');
+    this.uSparkAmpl   = gl.getUniformLocation(this.program, 'u_spark_ampl');
+    this.uSparkFreq   = gl.getUniformLocation(this.program, 'u_spark_freq');
+
 
     // Create the vertex and index buffer. They are initially empty. We need to track the
     // size of the index buffer because we use indexed drawing.
@@ -234,6 +243,16 @@ void main(void)
     gl.uniform1f(this.uCurrentTime, performance.now() / 1000.0);
     gl.uniform3fv(this.uCoreColor, this.layer.coreColor);
     gl.uniform3fv(this.uGlowColor, this.layer.glowColor);
+    gl.uniform1f(this.uCurrentTime, performance.now() / 1000.0);
+    gl.uniform3fv(this.uCoreColor,  this.layer.coreColor);
+    gl.uniform3fv(this.uGlowColor,  this.layer.glowColor);
+    gl.uniform1f(this.uPulseFreq,   this.layer.pulseFreq);
+
+    gl.uniform1f(this.uCoreRadius,  this.layer.coreRadius);
+    gl.uniform1f(this.uGlowRadius,  this.layer.glowRadius);
+    gl.uniform1f(this.uSparkAmpl,   this.layer.sparkAmpl);
+    gl.uniform1f(this.uSparkFreq,   this.layer.sparkFreq);
+
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
     gl.enableVertexAttribArray(this.aPosition);
@@ -393,7 +412,14 @@ export const CustomLayer = GraphicsLayer.createSubclass({
   properties:{
     coreColor:{value : [1.00, 0.25, 0.25]},
     glowColor:{value: [0.85, 0.10, 0.10]},
-    pulseFreq: { value: 2.0 }
+    pulseFreq: { value: 2.0 },
+    coreColor:  { value: [1.00, 0.25, 0.25] },
+    glowColor:  { value: [0.85, 0.10, 0.10] },
+    pulseFreq:  { value: 2.0 },     // Hz
+    coreRadius: { value: 4.0 },     // px
+    glowRadius: { value: 16.0 },    // px
+    sparkAmpl:  { value: 0.10 },    // 0 – 1
+    sparkFreq:  { value: 60.0 }     // Hz
   },
   createLayerView: function (view) {
     // We only support MapView, so we only need to return a
