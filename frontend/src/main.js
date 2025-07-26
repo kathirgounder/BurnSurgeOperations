@@ -12,6 +12,9 @@ import patientTmpls from "./data/patients.js";
 import { CustomLayer } from "./flashingIncidentLayer.js";
 import { solveODPair, computeScore } from "./routeService.js";
 
+/* Global Variables */
+let RESULTS_HAVE_LOADED = false;
+
 /* ── 1.  API key (covers basemap + OD) ───────────────────── */
 esriConfig.apiKey =
   "AAPTxy8BH1VEsoebNVZXo8HurExiheV8fp-Y5bdvR4oy2dC-XI7t-pbEluS39zbJeg0GaiY7Vp5WjXY_ze7MroCgHxBCRuJUHYcNagIHynfKvB5cMm-rvGo_V_yJ4WlBKew2aNjHsyU88PXm_FXwJh3_w_0MpxGfgoFapEas5kzZd5I23PwVuJLoo811sevETSYTS1NnT5zxgCdFTJwgeBwyOFJ86mFJk9OBPS3TVbJ5oBctSqPdMnm5zNLTHpkQcfSEAT1_d9LFzwbr";
@@ -90,24 +93,61 @@ const patientAssignments = patients.map((patient) => {
 
 console.log("patientAssignments", patientAssignments);
 
-function addPatientAssignmentsList(patientAssignments) {
-  const calciteActionBar = document.getElementById("patient-carousel");
+function addPatientAssignmentsListActionBtn(patientAssignments) {
+  const actionBar = document.getElementById("burn-surge-ops-action-bar");
+  const patientAssignmentsActionButton =
+    document.createElement("calcite-action");
+  patientAssignmentsActionButton.id = "patient-assignments-list-btn";
+  patientAssignmentsActionButton.icon = "person-2";
+  patientAssignmentsActionButton.text = "Patient Assignments";
+  patientAssignmentsActionButton.textEnabled = true;
+  patientAssignmentsActionButton.onclick = () =>
+    displayPatientAssignmentsListPopover(patientAssignments);
+  actionBar.appendChild(patientAssignmentsActionButton);
+}
+
+function displayPatientAssignmentsListPopover(patientAssignments) {
+  document.getElementById("patient-assignments-popover")?.remove(); // remove old popover if exists
+  const patientAssignmentsPopover = document.createElement("calcite-popover");
+  const patientAssignmentsListBtn = document.getElementById(
+    "patient-assignments-list-btn"
+  );
+  document.body.appendChild(patientAssignmentsPopover);
+  patientAssignmentsPopover.id = "patient-assignments-popover";
+  patientAssignmentsPopover.label = "Patient Assignments";
+  patientAssignmentsPopover.pointerDisabled = true;
+  patientAssignmentsPopover.offsetSkidding = 6;
+  patientAssignmentsPopover.referenceElement = patientAssignmentsListBtn;
+  patientAssignmentsPopover.placement = "leading";
+  const panelElement = document.createElement("calcite-panel");
+  panelElement.closable = true;
+  panelElement.addEventListener("calcitePanelClose", () => {
+    patientAssignmentsPopover.remove();
+  });
+  panelElement.heading = "Patient Assignments";
+  patientAssignmentsPopover.appendChild(panelElement);
   patientAssignments.forEach((patientAssignment) => {
-    const calciteAction = document.createElement("calcite-action");
-    if (patientAssignment.patientId.includes("mod")) {
-      calciteAction.icon = "exclamation-point-f";
-    } else if (patientAssignment.patientId.includes("severe")) {
-      calciteAction.icon = "exclamation-mark-triangle-f";
+    const patientAssignmentBtn = document.createElement("calcite-action");
+    if (!RESULTS_HAVE_LOADED) {
+      patientAssignmentBtn.loading = true;
+      patientAssignmentBtn.disabled = true;
     }
-    calciteAction.loading = true;
-    calciteAction.disabled = true;
-    calciteAction.className = "patient-assignment-action";
-    calciteAction.text = patientAssignment.patientId;
-    calciteAction.textEnabled = true;
-    calciteAction.dataset.pid = patientAssignment.patientId; //  <-- NOW present
-    calciteAction.onclick = () =>
-      highlightRouteFor(patientAssignment, calciteAction);
-    calciteActionBar.appendChild(calciteAction);
+    patientAssignmentBtn.className = "patient-assignment-action";
+    patientAssignmentBtn.text = patientAssignment.patientId;
+    patientAssignmentBtn.textEnabled = true;
+    patientAssignmentBtn.dataset.pid = patientAssignment.patientId; //  <-- NOW present
+    patientAssignmentBtn.onclick = () => {
+      // set all patient assignment buttons' active prop to be false
+      const allPatientAssignmentBtns = document.getElementsByClassName(
+        "patient-assignment-action"
+      );
+      for (const btn of allPatientAssignmentBtns) {
+        btn.active = false;
+      }
+      patientAssignmentBtn.active = true;
+      highlightRouteFor(patientAssignment, patientAssignmentBtn);
+    };
+    panelElement.appendChild(patientAssignmentBtn);
   });
 }
 
@@ -119,9 +159,10 @@ function setPatientAssignmentsListReady() {
     patientAssignmentAction.loading = false;
     patientAssignmentAction.disabled = false;
   }
+  RESULTS_HAVE_LOADED = true;
 }
 
-addPatientAssignmentsList(patientAssignments);
+addPatientAssignmentsListActionBtn(patientAssignments);
 
 // parallel OD solves, will finish executing even if some of the pair solves fail and we can filter
 // for proper promise fulfillment
@@ -298,13 +339,13 @@ async function highlightRouteFor(row, btn) {
   }
 
   // 5. Highlight active button
-  if (window.activeBtn) {
-    window.activeBtn.style.background = "";
-    window.activeBtn.style.color = "";
-  }
-  window.activeBtn = btn;
-  btn.style.background = "#007AC2";
-  btn.style.color = "#fff";
+  // if (window.activeBtn) {
+  //   window.activeBtn.style.background = "";
+  //   window.activeBtn.style.color = "";
+  // }
+  // window.activeBtn = btn;
+  // btn.style.background = "#007AC2";
+  // btn.style.color = "#fff";
 }
 
 function renderAssignmentsTable(rows) {
