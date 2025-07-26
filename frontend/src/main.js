@@ -61,7 +61,7 @@ const incidentgs = incidents.map(i => ({
   }
 }));
 
-const hospitalgs = hospitals.map(h => ({
+const sbcgs = hospitals.filter(h => h.type === "Burn Center").map(h => ({
   geometry: webMercatorUtils.geographicToWebMercator({
     x: h.lon, 
     y: h.lat,
@@ -74,8 +74,20 @@ const hospitalgs = hospitals.map(h => ({
   }
 }))
 
+const brcgs = hospitals.filter(h => h.type === "Burn Resource Center").map(h => ({
+  geometry: webMercatorUtils.geographicToWebMercator({
+    x: h.lon, 
+    y: h.lat,
+    spatialReference: { wkid: 4326},
+    type: 'point'
+  }),
+  attributes: {
+    NAME: h.name
+    // add any other attributes you want here
+  }
+}))
 
-const hospitalLayer = new CrossLayer({
+const brcLayer = new CrossLayer({
   popupTemplate: {
     title: 'Flashing Hospital Layer',
     content: 'Hello World'
@@ -90,12 +102,33 @@ const hospitalLayer = new CrossLayer({
   sparkAmpl  : 0.03,
   sparkFreq  : 15,
 
-  coreColor  : [0.80,0.80,0.95],
-  glowColor  : [0.55,0.55,0.60],
-  graphics   : hospitalgs
+  coreColor  : [0.36, 0.42, 0.86],
+  glowColor  : [0.20, 0.25, 0.57],
+  graphics   : brcgs
+});
+map.add(brcLayer);
+
+const sbcLayer = new CrossLayer({
+  popupTemplate: {
+    title: 'Flashing Hospital Layer',
+    content: 'Hello World'
+  },
+  sizePx     : 70,
+
+  coreRadius : 12,         // arm length 18 px
+  armWidth   : 0.06,       // 0.13 × 70 ≈ 9 px bar thickness
+  glowRadius : 18,
+
+  pulseFreq  : 0.6,
+  sparkAmpl  : 0.03,
+  sparkFreq  : 15,
+
+  coreColor  : [0.22, 0.76, 0.84],
+  glowColor  : [0.12, 0.48, 0.55],
+  graphics   : sbcgs
 });
 
-map.add(hospitalLayer);
+map.add(sbcLayer);
 
 // Create an instance of the custom layer with 4 initial graphics.
 const incidentLayer = new FlashingIncidentLayer({
