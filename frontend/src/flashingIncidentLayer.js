@@ -414,7 +414,7 @@ void main(void)
 });
 
 // Subclass the custom layer view from GraphicsLayer.
-export const CustomLayer = GraphicsLayer.createSubclass({
+export const FlashingIncidentLayer = GraphicsLayer.createSubclass({
   properties:{
     coreColor:{value : [1.00, 0.25, 0.25]},
     glowColor:{value: [0.85, 0.10, 0.10]},

@@ -9,7 +9,8 @@ import Basemap from "@arcgis/core/Basemap.js"
 import { hospitals } from './data/hospitals.js';
 import incidents from './data/incidents.js';
 import patientTmpls from './data/patients.js';
-import { CustomLayer } from './flashingIncidentLayer.js';
+import { FlashingIncidentLayer } from './flashingIncidentLayer.js';
+import { CrossLayer } from './breathingCrossLayer.js';
 import { solveODPair, computeScore } from './routeService.js';
 
 /* ── 1.  API key (covers basemap + OD) ───────────────────── */
@@ -73,26 +74,31 @@ const hospitalgs = hospitals.map(h => ({
   }
 }))
 
-const hospitalLayer = new CustomLayer({
+
+const hospitalLayer = new CrossLayer({
   popupTemplate: {
     title: 'Flashing Hospital Layer',
     content: 'Hello World'
   },
-  coreColor: [0.80, 0.80, 0.95],   // soft silver‑white
-  glowColor: [0.55, 0.55, 0.60],   // bluish‑steel halo
-  pulseFreq: 0.6,                   // one blink every ~1.7 s
-  coreRadius: 5,     // slightly larger dot
-  glowRadius: 18,    // keep halo proportional
-  sparkAmpl:  0.03,    // barely perceptible
-  sparkFreq:  15.0,     // languid sparkle,
-  sizePx: 70,
-  graphics: hospitalgs
-})
+  sizePx     : 70,
+
+  coreRadius : 12,         // arm length 18 px
+  armWidth   : 0.07,       // 0.13 × 70 ≈ 9 px bar thickness
+  glowRadius : 18,
+
+  pulseFreq  : 0.6,
+  sparkAmpl  : 0.03,
+  sparkFreq  : 15,
+
+  coreColor  : [0.80,0.80,0.95],
+  glowColor  : [0.55,0.55,0.60],
+  graphics   : hospitalgs
+});
 
 map.add(hospitalLayer);
 
 // Create an instance of the custom layer with 4 initial graphics.
-const incidentLayer = new CustomLayer({
+const incidentLayer = new FlashingIncidentLayer({
   pulseFreq: 5,
   coreRadius: 8.0,
   glowRadius: 24.0,
