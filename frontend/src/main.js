@@ -573,6 +573,142 @@ function setResultsHaveLoaded() {
 
 addHospitalSelectionsActionBtn(hospitals);
 
+// Add Toggle Layers functionality
+function addToggleLayersActionBtn() {
+  const actionBar = document.getElementById("burn-surge-ops-action-bar");
+  const toggleLayersActionButton = document.createElement("calcite-action");
+  toggleLayersActionButton.id = "toggle-layers-action-btn";
+  toggleLayersActionButton.icon = "layers";
+  toggleLayersActionButton.text = "Toggle Layers";
+  toggleLayersActionButton.textEnabled = true;
+  toggleLayersActionButton.onclick = () => displayToggleLayersPopover();
+  actionBar.appendChild(toggleLayersActionButton);
+}
+
+function displayToggleLayersPopover() {
+  const popovers = document.getElementsByClassName("burn-surge-ops-popover");
+  for (const popover of popovers) {
+    popover.remove();
+  } // remove old popover if exists
+  
+  const toggleLayersPopover = document.createElement("calcite-popover");
+  const toggleLayersActionBtn = document.getElementById("toggle-layers-action-btn");
+  document.body.appendChild(toggleLayersPopover);
+  toggleLayersPopover.id = "toggle-layers-popover";
+  toggleLayersPopover.className = "burn-surge-ops-popover";
+  toggleLayersPopover.style.cssText = "height: 60%;";
+  toggleLayersPopover.label = "Toggle Layers";
+  toggleLayersPopover.pointerDisabled = true;
+  toggleLayersPopover.offsetSkidding = 6;
+  toggleLayersPopover.referenceElement = toggleLayersActionBtn;
+  toggleLayersPopover.placement = "leading";
+  
+  const panelElement = document.createElement("calcite-panel");
+  panelElement.style.cssText = "height: 600px;";
+  panelElement.closable = true;
+  panelElement.addEventListener("calcitePanelClose", () => {
+    toggleLayersPopover.remove();
+  });
+  panelElement.heading = "Toggle Layers";
+  
+  const listElement = document.createElement("calcite-list");
+  toggleLayersPopover.appendChild(panelElement);
+  
+  // Define all layers with their display names and references
+  const layerConfigs = [
+    { 
+      name: "Incident Layer", 
+      layer: incidentLayer, 
+      id: "incident-layer",
+      description: "Flashing incident location"
+    },
+    { 
+      name: "Service Area", 
+      layer: serviceAreaLayer, 
+      id: "service-area-layer",
+      description: "Drive time service areas"
+    },
+    { 
+      name: "General Hospitals", 
+      layer: generalHospitalsLayer, 
+      id: "general-hospitals-layer",
+      description: "General hospitals in service area"
+    },
+    { 
+      name: "Burn Resource Centers", 
+      layer: brcLayer, 
+      id: "brc-layer",
+      description: "Burn Resource Centers (blue crosses)"
+    },
+    { 
+      name: "Burn Centers", 
+      layer: sbcLayer, 
+      id: "sbc-layer",
+      description: "Specialized Burn Centers (cyan crosses)"
+    },
+    { 
+      name: "Routes", 
+      layer: routeLayer, 
+      id: "route-layer",
+      description: "Patient transport routes"
+    }
+  ];
+  
+  layerConfigs.forEach((config) => {
+    const layerListItem = document.createElement("calcite-list-item");
+    layerListItem.label = config.name;
+    layerListItem.description = config.description;
+    
+    const layerSwitch = document.createElement("calcite-switch");
+    layerSwitch.className = "layer-switch";
+    layerSwitch.id = config.id;
+    layerSwitch.label = config.name;
+    layerSwitch.slot = "content-end";
+    layerSwitch.checked = config.layer.visible;
+    
+    layerSwitch.addEventListener("calciteSwitchChange", () => {
+      config.layer.visible = layerSwitch.checked;
+    });
+    
+    layerListItem.appendChild(layerSwitch);
+    listElement.appendChild(layerListItem);
+  });
+  
+  panelElement.appendChild(listElement);
+  
+  // Add "Toggle All" buttons
+  const buttonContainer = document.createElement("div");
+  buttonContainer.style.cssText = "display: flex; gap: 8px; padding: 8px;";
+  
+  const showAllBtn = document.createElement("calcite-button");
+  showAllBtn.innerHTML = "Show All";
+  showAllBtn.width = "half";
+  showAllBtn.onclick = () => {
+    layerConfigs.forEach(config => {
+      config.layer.visible = true;
+      const switchElement = document.getElementById(config.id);
+      if (switchElement) switchElement.checked = true;
+    });
+  };
+  
+  const hideAllBtn = document.createElement("calcite-button");
+  hideAllBtn.innerHTML = "Hide All";
+  hideAllBtn.width = "half";
+  hideAllBtn.onclick = () => {
+    layerConfigs.forEach(config => {
+      config.layer.visible = false;
+      const switchElement = document.getElementById(config.id);
+      if (switchElement) switchElement.checked = false;
+    });
+  };
+  
+  buttonContainer.appendChild(showAllBtn);
+  buttonContainer.appendChild(hideAllBtn);
+  panelElement.appendChild(buttonContainer);
+}
+
+addToggleLayersActionBtn();
+
 // parallel OD solves, will finish executing even if some of the pair solves fail and we can filter
 // for proper promise fulfillment
 // solveODPair returns an object like this
