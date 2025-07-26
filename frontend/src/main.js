@@ -13,7 +13,15 @@ import { CustomLayer } from "./flashingIncidentLayer.js";
 import { solveODPair, computeScore } from "./routeService.js";
 
 /* Global Variables */
+let HOSPITALS_ARE_SELECTED = false;
 let RESULTS_HAVE_LOADED = false;
+let RESULTS_IS_LOADING = false;
+let hospitalSelections = {};
+let filteredHospitals = [];
+// initialize hospitalSelections
+hospitals.forEach((hospital) => (hospitalSelections[hospital.name] = false));
+
+let routeByDest;
 
 /* ── 1.  API key (covers basemap + OD) ───────────────────── */
 esriConfig.apiKey =
@@ -97,7 +105,7 @@ function addPatientAssignmentsListActionBtn(patientAssignments) {
   const actionBar = document.getElementById("burn-surge-ops-action-bar");
   const patientAssignmentsActionButton =
     document.createElement("calcite-action");
-  patientAssignmentsActionButton.id = "patient-assignments-list-btn";
+  patientAssignmentsActionButton.id = "patient-assignments-action-btn";
   patientAssignmentsActionButton.icon = "person-2";
   patientAssignmentsActionButton.text = "Patient Assignments";
   patientAssignmentsActionButton.textEnabled = true;
@@ -107,17 +115,21 @@ function addPatientAssignmentsListActionBtn(patientAssignments) {
 }
 
 function displayPatientAssignmentsListPopover(patientAssignments) {
-  document.getElementById("patient-assignments-popover")?.remove(); // remove old popover if exists
+  const popovers = document.getElementsByClassName("burn-surge-ops-popover");
+  for (const popover of popovers) {
+    popover.remove();
+  } // remove old popover if exists
   const patientAssignmentsPopover = document.createElement("calcite-popover");
-  const patientAssignmentsListBtn = document.getElementById(
-    "patient-assignments-list-btn"
+  const patientAssignmentsActionBtn = document.getElementById(
+    "patient-assignments-action-btn"
   );
   document.body.appendChild(patientAssignmentsPopover);
   patientAssignmentsPopover.id = "patient-assignments-popover";
+  patientAssignmentsPopover.className = "burn-surge-ops-popover";
   patientAssignmentsPopover.label = "Patient Assignments";
   patientAssignmentsPopover.pointerDisabled = true;
   patientAssignmentsPopover.offsetSkidding = 6;
-  patientAssignmentsPopover.referenceElement = patientAssignmentsListBtn;
+  patientAssignmentsPopover.referenceElement = patientAssignmentsActionBtn;
   patientAssignmentsPopover.placement = "leading";
   const panelElement = document.createElement("calcite-panel");
   panelElement.closable = true;
@@ -128,7 +140,13 @@ function displayPatientAssignmentsListPopover(patientAssignments) {
   patientAssignmentsPopover.appendChild(panelElement);
   patientAssignments.forEach((patientAssignment) => {
     const patientAssignmentBtn = document.createElement("calcite-action");
-    if (!RESULTS_HAVE_LOADED) {
+    if (!HOSPITALS_ARE_SELECTED) {
+      patientAssignmentBtn.disabled = true;
+      const toolTip = document.createElement("calcite-tooltip");
+      toolTip.innerHTML = "Please select at least 2 hospitals";
+      toolTip.referenceElement = patientAssignmentBtn;
+      document.body.appendChild(toolTip);
+    } else if (!RESULTS_HAVE_LOADED) {
       patientAssignmentBtn.loading = true;
       patientAssignmentBtn.disabled = true;
     }
@@ -164,6 +182,125 @@ function setPatientAssignmentsListReady() {
 
 addPatientAssignmentsListActionBtn(patientAssignments);
 
+function addHospitalSelectionsActionBtn(hospitals) {
+  const actionBar = document.getElementById("burn-surge-ops-action-bar");
+  const hospitalSelectionsActionButton =
+    document.createElement("calcite-action");
+  hospitalSelectionsActionButton.id = "hospital-selections-action-btn";
+  hospitalSelectionsActionButton.icon = "medical";
+  hospitalSelectionsActionButton.text = "Hospital Selections";
+  hospitalSelectionsActionButton.textEnabled = true;
+  hospitalSelectionsActionButton.onclick = () =>
+    displayHospitalSelectionsPopover(hospitals);
+  actionBar.appendChild(hospitalSelectionsActionButton);
+}
+
+function displayHospitalSelectionsPopover(hospitals) {
+  const popovers = document.getElementsByClassName("burn-surge-ops-popover");
+  for (const popover of popovers) {
+    popover.remove();
+  } // remove old popover if exists
+  const hospitalSelectionsPopover = document.createElement("calcite-popover");
+  const hospitalSelectionsActionBtn = document.getElementById(
+    "hospital-selections-action-btn"
+  );
+  document.body.appendChild(hospitalSelectionsPopover);
+  hospitalSelectionsPopover.id = "hospital-selections-popover";
+  hospitalSelectionsPopover.className = "burn-surge-ops-popover";
+  hospitalSelectionsPopover.style.cssText = "height: 50%;";
+  hospitalSelectionsPopover.label = "Hospital Selections";
+  hospitalSelectionsPopover.pointerDisabled = true;
+  hospitalSelectionsPopover.offsetSkidding = 6;
+  hospitalSelectionsPopover.referenceElement = hospitalSelectionsActionBtn;
+  hospitalSelectionsPopover.placement = "leading";
+  const panelElement = document.createElement("calcite-panel");
+  panelElement.style.cssText = "height: 500px;";
+  panelElement.closable = true;
+  panelElement.addEventListener("calcitePanelClose", () => {
+    hospitalSelectionsPopover.remove();
+  });
+  panelElement.heading = "Hospital Selections";
+  const listElement = document.createElement("calcite-list");
+  hospitalSelectionsPopover.appendChild(panelElement);
+  hospitals.forEach((hospital) => {
+    const hospitalSelectionListItem =
+      document.createElement("calcite-list-item");
+    hospitalSelectionListItem.label = hospital.name;
+    // hospitalSelectionListItem.disabled = true;
+    const hospitalSelectionSwitch = document.createElement("calcite-switch");
+    hospitalSelectionSwitch.className = "hospital-switch";
+    hospitalSelectionSwitch.label = hospital.name;
+    hospitalSelectionSwitch.slot = "content-end";
+    hospitalSelectionSwitch.checked = hospitalSelections[hospital.name];
+    hospitalSelectionSwitch.addEventListener("calciteSwitchChange", () => {
+      // count number of checked hospitals
+      let count = 0;
+      const hospitalListItemElements = listElement.children;
+      for (const switchElement of hospitalListItemElements) {
+        if (switchElement.children[0].checked === true) {
+          count++;
+        }
+      }
+      if (count >= 2) {
+        HOSPITALS_ARE_SELECTED = true;
+        const hospitalApplyBtn = document.getElementById("hospital-apply-btn");
+        hospitalApplyBtn.disabled = false;
+      } else {
+        HOSPITALS_ARE_SELECTED = false;
+        const hospitalApplyBtn = document.getElementById("hospital-apply-btn");
+        hospitalApplyBtn.disabled = true;
+      }
+    });
+    hospitalSelectionListItem.appendChild(hospitalSelectionSwitch);
+    listElement.appendChild(hospitalSelectionListItem);
+  });
+  panelElement.appendChild(listElement);
+
+  // render Apply button
+  const applyButton = document.createElement("calcite-button");
+  applyButton.id = "hospital-apply-btn";
+  applyButton.innerHTML = "Apply";
+  applyButton.slot = "footer";
+  applyButton.width = "full";
+  if (!HOSPITALS_ARE_SELECTED) {
+    applyButton.disabled = true;
+  }
+  applyButton.onclick = () => {
+    RESULTS_IS_LOADING = true;
+    applyButton.disabled = true;
+    applyButton.loading = true;
+    const hospitalSwitches = document.getElementsByClassName("hospital-switch");
+    for (const hospitalSwitch of hospitalSwitches) {
+      const hospitalName = hospitalSwitch.label;
+      hospitalSelections[hospitalName] = hospitalSwitch.checked;
+    }
+    console.log(
+      "After clicking apply. New hospitalSelections ",
+      hospitalSelections
+    );
+    const selectedHospitalsList = Object.keys(hospitalSelections).filter(
+      (hospital) => hospitalSelections[hospital] === true
+    );
+
+    const selectedHospitalsSet = new Set(selectedHospitalsList);
+
+    filteredHospitals = hospitals.filter((hospital) =>
+      selectedHospitalsSet.has(hospital.name)
+    );
+    run();
+  };
+  panelElement.appendChild(applyButton);
+}
+
+function setResultsHaveLoaded() {
+  RESULTS_IS_LOADING = false;
+  const hospitalApplyBtn = document.getElementById("hospital-apply-btn");
+  hospitalApplyBtn.disabled = false;
+  hospitalApplyBtn.loading = false;
+}
+
+addHospitalSelectionsActionBtn(hospitals);
+
 // parallel OD solves, will finish executing even if some of the pair solves fail and we can filter
 // for proper promise fulfillment
 // solveODPair returns an object like this
@@ -173,94 +310,105 @@ addPatientAssignmentsListActionBtn(patientAssignments);
 //     meters:   routeInfo.totalDistance,
 //     geometry: routeInfo.geometry
 // };
-const results = await Promise.allSettled(
-  hospitals.map((h) => solveODPair(incident, h))
-);
+// const results = await Promise.allSettled(
+//   hospitals.map((h) => solveODPair(incident, h))
+// );
 
-setPatientAssignmentsListReady();
+async function run() {
+  if (filteredHospitals.length > 0) {
+    const results = await Promise.allSettled(
+      filteredHospitals.map((h) => solveODPair(incident, h))
+    );
+    setPatientAssignmentsListReady();
+    setResultsHaveLoaded();
 
-console.log("Results");
-console.log(results);
+    console.log("Results");
+    console.log(results);
 
-// Make a dictionary of destId and minutes pairs
-const travelByDest = {};
+    // Make a dictionary of destId and minutes pairs
+    const travelByDest = {};
 
-results.forEach((r) => {
-  if (r.status === "fulfilled") {
-    const { destName, minutes } = r.value;
+    results.forEach((r) => {
+      if (r.status === "fulfilled") {
+        const { destName, minutes } = r.value;
 
-    if (!destName) {
-      console.warn("Route returned no destId", r.value);
-      return;
-    }
-    if (!Number.isFinite(minutes)) {
-      console.warn("Bad minutes for", destName, r.value);
-      return;
-    }
-    travelByDest[destName] = minutes;
-  } else {
-    console.error("Route failed:", r.reason);
-  }
-});
+        if (!destName) {
+          console.warn("Route returned no destId", r.value);
+          return;
+        }
+        if (!Number.isFinite(minutes)) {
+          console.warn("Bad minutes for", destName, r.value);
+          return;
+        }
+        travelByDest[destName] = minutes;
+      } else {
+        console.error("Route failed:", r.reason);
+      }
+    });
 
-// Fast lookup: destName → full route solve object
-const routeByDest = Object.fromEntries(
-  results
-    .filter((r) => r.status === "fulfilled")
-    .map((r) => [r.value.destName, r.value]) // destName came from solveODPair
-);
+    // Fast lookup: destName → full route solve object
+    routeByDest = Object.fromEntries(
+      results
+        .filter((r) => r.status === "fulfilled")
+        .map((r) => [r.value.destName, r.value]) // destName came from solveODPair
+    );
 
-console.log("travel by dest");
-console.log(travelByDest);
+    console.log("travel by dest");
+    console.log(travelByDest);
 
-const assignments = patients.map((p) => {
-  const scored = hospitals
-    .map((h) => {
-      const minutes = travelByDest[h.name];
+    const assignments = patients.map((p) => {
+      const scored = hospitals
+        .map((h) => {
+          const minutes = travelByDest[h.name];
+          return {
+            dest: h,
+            minutes,
+            score: computeScore({ minutes, dest: h, patient: p }),
+          };
+        })
+        .sort((a, b) => a.score - b.score);
+
+      console.log("Scored");
+      console.log(scored);
+
       return {
-        dest: h,
-        minutes,
-        score: computeScore({ minutes, dest: h, patient: p }),
+        patientId: p.uid,
+        severity: p.priority,
+        patient: p,
+        bestDest: scored[0].dest.name,
+        minutes: scored[0].minutes.toFixed(1),
+        score: scored[0].score.toFixed(1),
       };
-    })
-    .sort((a, b) => a.score - b.score);
+    });
 
-  console.log("Scored");
-  console.log(scored);
+    console.table(assignments);
 
-  return {
-    patientId: p.uid,
-    severity: p.priority,
-    patient: p,
-    bestDest: scored[0].dest.name,
-    minutes: scored[0].minutes.toFixed(1),
-    score: scored[0].score.toFixed(1),
-  };
-});
+    // results
+    //   .filter(r => r.status === 'fulfilled')
+    //   .forEach(r => {
+    //     const { geometry, minutes } = r.value;
+    //     const patientIds = assignments
+    //      .filter(a => a.bestDest === r.value.destName)
+    //      .map(a => a.patientId)
+    //      .join(", ");
+    //     view.graphics.add({
+    //       geometry,
+    //       symbol: {
+    //        type: "simple-line",
+    //        width: 4,
+    //        color: minutes < 30 ? "green" : minutes < 45 ? "orange" : "red"
+    //      },
+    //      popupTemplate: {
+    //        title: `{minutes:numberFormat#0.0} min`,
+    //        content: "Patients on this route: {patientIds}"
+    //      }
+    //     });
+    //   });
+    renderAssignmentsTable(assignments);
 
-console.table(assignments);
-
-// results
-//   .filter(r => r.status === 'fulfilled')
-//   .forEach(r => {
-//     const { geometry, minutes } = r.value;
-//     const patientIds = assignments
-//      .filter(a => a.bestDest === r.value.destName)
-//      .map(a => a.patientId)
-//      .join(", ");
-//     view.graphics.add({
-//       geometry,
-//       symbol: {
-//        type: "simple-line",
-//        width: 4,
-//        color: minutes < 30 ? "green" : minutes < 45 ? "orange" : "red"
-//      },
-//      popupTemplate: {
-//        title: `{minutes:numberFormat#0.0} min`,
-//        content: "Patients on this route: {patientIds}"
-//      }
-//     });
-//   });
+    addReportButton(assignments);
+  }
+}
 
 function makeFlowLineSymbol(baseColor) {
   // baseColor can be a hex string ("#30B37E") or [r,g,b]
@@ -379,8 +527,6 @@ function renderAssignmentsTable(rows) {
   document.body.appendChild(tbl);
 }
 
-renderAssignmentsTable(assignments);
-
 /* -------- inline mini‑report -------- */
 function buildReportHTML(rows) {
   return `
@@ -442,8 +588,6 @@ function addReportButton(rows) {
 
   document.body.appendChild(btn);
 }
-
-addReportButton(assignments);
 
 // Custom OD Cost Matrix Function
 // async function addRouteLayer (dest) {
