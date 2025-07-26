@@ -353,23 +353,40 @@ function addReportButton(rows) {
   const btn = document.createElement('button');
   btn.textContent = 'Generate Report';
   btn.style.cssText = 'position:absolute;top:10px;left:10px;z-index:9999';
+
+  const jsonOutput = {
+    incidentName: incident.name,
+    incidentDate: incident.datetime,
+    incidentNotes: incident.notes,
+    patients: rows.map(r => ({
+      patientId: r.patientId,
+      severity: r.severity,
+      bestDest: r.bestDest,
+      minutes: r.minutes,
+      score: r.score
+    })),
+    generatedAt: new Date().toISOString()
+  };
+
   
   btn.onclick = async () => {
     try {
+      console.log(jsonOutput)
       const response = await fetch('http://127.0.0.1:8000/generate-report/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ rows })  // wrap in an object if backend expects `rows`
+        body: JSON.stringify(jsonOutput)  // wrap in an object if backend expects `rows`
       });
 
       if (!response.ok) {
         throw new Error('Failed to generate report');
       }
 
-      const htmlString = await response.text();
-      const blob = new Blob([htmlString], { type: 'text/html' });
+      const htmlString = await response.json();
+
+      const blob = new Blob([htmlString.message], { type: 'text/html' });
       window.open(URL.createObjectURL(blob), '_blank');
 
     } catch (err) {
