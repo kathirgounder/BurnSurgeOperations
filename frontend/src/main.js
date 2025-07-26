@@ -348,16 +348,39 @@ function buildReportHTML (rows) {
     </body></html>`;
 }
 
-function addReportButton (rows) {
+function addReportButton(rows) {
+  // BROKEN, NEED TO FIX
   const btn = document.createElement('button');
   btn.textContent = 'Generate Report';
   btn.style.cssText = 'position:absolute;top:10px;left:10px;z-index:9999';
-  btn.onclick = () => {
-    const blob = new Blob([buildReportHTML(rows)], { type: 'text/html' });
-    window.open(URL.createObjectURL(blob), '_blank');
+  
+  btn.onclick = async () => {
+    try {
+      const response = await fetch('http://127.0.0.1:8000/generate-report/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ rows })  // wrap in an object if backend expects `rows`
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate report');
+      }
+
+      const htmlString = await response.text();
+      const blob = new Blob([htmlString], { type: 'text/html' });
+      window.open(URL.createObjectURL(blob), '_blank');
+
+    } catch (err) {
+      console.error('Error generating report:', err);
+      alert('Failed to generate report.');
+    }
   };
+
   document.body.appendChild(btn);
 }
+
 
 addReportButton(assignments);
 
