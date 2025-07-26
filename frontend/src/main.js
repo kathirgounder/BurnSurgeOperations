@@ -78,10 +78,10 @@ const hospitalLayer = new CustomLayer({
     title: 'Flashing Hospital Layer',
     content: 'Hello World'
   },
-  coreColor: [0.80, 0.80, 0.85],   // soft silver‑white
+  coreColor: [0.80, 0.80, 0.95],   // soft silver‑white
   glowColor: [0.55, 0.55, 0.60],   // bluish‑steel halo
   pulseFreq: 0.6,                   // one blink every ~1.7 s
-  coreRadius: 8,     // slightly larger dot
+  coreRadius: 5,     // slightly larger dot
   glowRadius: 18,    // keep halo proportional
   sparkAmpl:  0.03,    // barely perceptible
   sparkFreq:  15.0,     // languid sparkle,
