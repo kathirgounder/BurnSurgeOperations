@@ -20,13 +20,13 @@ import * as geometryEngine from "@arcgis/core/geometry/geometryEngine.js";
 import Graphic from "@arcgis/core/Graphic.js";
 
 /* Global Variables */
-let HOSPITALS_ARE_SELECTED = true;
+let HOSPITALS_ARE_SELECTED = false;
 let RESULTS_HAVE_LOADED = false;
 let RESULTS_IS_LOADING = false;
 let hospitalSelections = {};
 let filteredHospitals = [];
 // initialize hospitalSelections
-hospitals.forEach((hospital) => (hospitalSelections[hospital.name] = true));
+hospitals.forEach((hospital) => (hospitalSelections[hospital.name] = false));
 
 let routeByDest;
 
