@@ -62,8 +62,9 @@ const CustomLayerView2D = BaseLayerViewGL2D.createSubclass({
               attribute vec2 a_offset;
               varying vec2 v_offset;
               const float SIZE = 70.0;
+              uniform float u_size_px;
               void main(void) {
-                  gl_Position.xy = (u_display * (u_transform * vec3(a_position, 1.0) + vec3(a_offset * SIZE, 0.0))).xy;
+                  gl_Position.xy = (u_display * (u_transform * vec3(a_position, 1.0) + vec3(a_offset * u_size_px, 0.0))).xy;
                   gl_Position.zw = vec2(0.0, 1.0);
                   v_offset = a_offset;
               }`;
@@ -80,6 +81,7 @@ uniform float u_core_radius;
 uniform float u_glow_radius;
 uniform float u_spark_ampl;
 uniform float u_spark_freq;
+uniform float u_size_px;
 
 // ── STYLE PARAMETERS ─────────────────────────────────────────────
 const float SIZE_PX      = 70.0;           // ↔ must match vertex SIZE
@@ -101,7 +103,7 @@ float hashp(vec2 p){
 void main(void)
 {
     // 1) radius in pixels
-    float r = length(v_offset) * SIZE_PX;
+    float r = length(v_offset) * u_size_px;
 
     // 2) base disc (hard centre, anti‑aliased edge)
     float core = 1.0 - smoothstep(u_core_radius - 1.0,
@@ -166,6 +168,8 @@ void main(void)
     this.uGlowRadius  = gl.getUniformLocation(this.program, 'u_glow_radius');
     this.uSparkAmpl   = gl.getUniformLocation(this.program, 'u_spark_ampl');
     this.uSparkFreq   = gl.getUniformLocation(this.program, 'u_spark_freq');
+    this.uSizePx = gl.getUniformLocation(this.program, 'u_size_px');
+
 
 
     // Create the vertex and index buffer. They are initially empty. We need to track the
@@ -247,6 +251,8 @@ void main(void)
     gl.uniform3fv(this.uCoreColor,  this.layer.coreColor);
     gl.uniform3fv(this.uGlowColor,  this.layer.glowColor);
     gl.uniform1f(this.uPulseFreq,   this.layer.pulseFreq);
+    gl.uniform1f(this.uSizePx,   this.layer.sizePx);
+
 
     gl.uniform1f(this.uCoreRadius,  this.layer.coreRadius);
     gl.uniform1f(this.uGlowRadius,  this.layer.glowRadius);
@@ -419,7 +425,8 @@ export const CustomLayer = GraphicsLayer.createSubclass({
     coreRadius: { value: 4.0 },     // px
     glowRadius: { value: 16.0 },    // px
     sparkAmpl:  { value: 0.10 },    // 0 – 1
-    sparkFreq:  { value: 60.0 }     // Hz
+    sparkFreq:  { value: 60.0 },     // Hz
+    sizePx:     { value: 70.0 }
   },
   createLayerView: function (view) {
     // We only support MapView, so we only need to return a

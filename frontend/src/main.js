@@ -81,10 +81,11 @@ const hospitalLayer = new CustomLayer({
   coreColor: [0.80, 0.80, 0.85],   // soft silver‑white
   glowColor: [0.55, 0.55, 0.60],   // bluish‑steel halo
   pulseFreq: 0.6,                   // one blink every ~1.7 s
-  coreRadius: 5.5,     // slightly larger dot
-  glowRadius: 18.0,    // keep halo proportional
+  coreRadius: 8,     // slightly larger dot
+  glowRadius: 18,    // keep halo proportional
   sparkAmpl:  0.03,    // barely perceptible
-  sparkFreq:  15.0,     // languid sparkle
+  sparkFreq:  15.0,     // languid sparkle,
+  sizePx: 70,
   graphics: hospitalgs
 })
 
@@ -93,10 +94,11 @@ map.add(hospitalLayer);
 // Create an instance of the custom layer with 4 initial graphics.
 const incidentLayer = new CustomLayer({
   pulseFreq: 5,
-  coreRadius: 4.0,
-  glowRadius: 16.0,
+  coreRadius: 8.0,
+  glowRadius: 24.0,
   sparkAmpl:  0.10,    // obvious crackle
   sparkFreq:  60.0,     // rapid shimmer
+  sizePx: 70,
   popupTemplate: {
     title: 'Flashing Incident Layer',
     content: 'Population: {POPULATION}.'
