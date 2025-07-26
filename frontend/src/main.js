@@ -87,7 +87,30 @@ map.add(routeLayer);
 const serviceAreaLayer = new GraphicsLayer({ title: 'Service Area' });
 map.add(serviceAreaLayer);
 
-const generalHospitalsLayer = new GraphicsLayer({ title: 'General Hospitals' });
+const generalHospitalsLayer = new CrossLayer({
+  popupTemplate: {
+    title: "Potential Burn Resource Centers",
+    content: `
+      <ul>
+        <li><b>Beds open:</b> {beds}</li>
+        <li><b>Burn capability:</b> {capability}%</li>
+        <li><b>Pediatric unit:</b> {peds}</li>
+        <li><b>Tele‑burn enabled:</b> {tele}</li>
+      </ul>`
+  },
+  sizePx     : 70,
+
+  coreRadius : 12,         // arm length 18 px
+  armWidth   : 0.06,       // 0.13 × 70 ≈ 9 px bar thickness
+  glowRadius : 18,
+
+  pulseFreq  : 0.6,
+  sparkAmpl  : 0.03,
+  sparkFreq  : 15,
+
+  coreColor: [0.98, 0.62, 0.21],
+  glowColor: [0.55, 0.33, 0.05]
+});
 map.add(generalHospitalsLayer);
 
 const point = new Point({
@@ -100,15 +123,16 @@ createServiceArea({point: point, serviceAreaLayer: serviceAreaLayer, view: view}
   queryHospitalsInServiceArea(serviceAreaPolygons, generalHospitalsLayer);
 });
 
-view.when(() => {
-  view.on("click", async (event) => {
-    const point = event.mapPoint;
+/* General OnClick Service Area Functionality */
+// view.when(() => {
+//   view.on("click", async (event) => {
+//     const point = event.mapPoint;
 
-    createServiceArea({point: point, serviceAreaLayer: serviceAreaLayer, view: view, size: 8}).then(serviceAreaPolygons => {
-      queryHospitalsInServiceArea(serviceAreaPolygons, generalHospitalsLayer);
-    });
-  });
-});
+//     createServiceArea({point: point, serviceAreaLayer: serviceAreaLayer, view: view, size: 8}).then(serviceAreaPolygons => {
+//       queryHospitalsInServiceArea(serviceAreaPolygons, generalHospitalsLayer);
+//     });
+//   });
+// });
 
 
 // const incidentgs = incident.map(i => ({
@@ -258,16 +282,16 @@ function queryHospitalsInServiceArea(serviceAreaPolygons, generalHospitalsLayer)
         spatialReference: { wkid: 4326 },
         type: 'point'
       }),
-      symbol: {
-        type: "simple-marker",
-        style: "circle",
-        color: [255, 255, 255, 0.8], // White with transparency
-        size: 8,
-        outline: {
-          color: [0, 0, 0, 0.8],
-          width: 1
-        }
-      },
+      // symbol: {
+      //   type: "simple-marker",
+      //   style: "circle",
+      //   color: [255, 255, 255, 0.8], // White with transparency
+      //   size: 8,
+      //   outline: {
+      //     color: [0, 0, 0, 0.8],
+      //     width: 1
+      //   }
+      // },
       attributes: {
         NAME: hospital.name,
         PHONE: hospital.phone,
@@ -459,6 +483,19 @@ async function highlightRouteFor (row, btn) {
       dest,
       patient: row.patient
     });
+
+    // dark halo
+    routeLayer.add(new Graphic({
+      geometry: route.geometry,
+      symbol: {                   // black outline layer
+        type: "simple-line",
+        color: [0, 0, 0, 1],    // solid black
+        width: 5,
+        cap: "round",
+        join: "round"
+      }
+    }));
+
     routeLayer.add({
       geometry: route.geometry,
       symbol: makeFlowLineSymbol(
