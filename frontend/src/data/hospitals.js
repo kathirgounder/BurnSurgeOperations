@@ -1,5 +1,5 @@
 export const hospitals = [
-  /* ───────────── Burn Resource Centers (capability ≈ 0.5‑0.75) ───────────── */
+  /* ───────────── Burn Resource Centers (capability ≈ 1.0-5.0) ───────────── */
   {
     name: "Antelope Valley Hospital",
     lat: 34.6881827,
