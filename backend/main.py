@@ -20,12 +20,38 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+class Patient(BaseModel):
+    patientId: str
+    severity: str
+    bestDest: str
+    minutes: str
+    score: str
+
 class ReportRequest(BaseModel):
-    rows: List[dict]
+    incidentName: str
+    incidentDate: str
+    incidentNotes: str
+    patients: List[Patient]
+    generatedAt: str
 
 @app.post("/generate-report")
 async def generate_report(request: ReportRequest):
-    prompt = request.rows
+    prompt = f"""
+    Burn Incident Description
+    Incident: {request.incidentName}
+    Date: {request.incidentDate}
+    Notes: {request.incidentNotes}
+
+    Patient Assignments:
+    """
+
+    for p in request.patients:
+        prompt += (
+            f"- Patient ID: {p.patientId}, Severity: {p.severity}, "
+            f"Destination: {p.bestDest}, Minutes: {p.minutes}, Score: {p.score}\n"
+        )
+
+    prompt += f"\nReport generated at {request.generatedAt}"
 
     client = OpenAI(
         api_key=env.get('OPENAI_KEY'),

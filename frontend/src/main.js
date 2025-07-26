@@ -460,37 +460,76 @@ function buildReportHTML (rows) {
 }
 
 function addReportButton(rows) {
-  // BROKEN, NEED TO FIX
+  // Create the button
   const btn = document.createElement('button');
   btn.textContent = 'Generate Report';
   btn.style.cssText = 'position:absolute;top:10px;left:10px;z-index:9999';
-  
+
+  // Create loading overlay
+  const loadingOverlay = document.createElement('div');
+  loadingOverlay.textContent = 'Generating Report...';
+  loadingOverlay.style.cssText = `
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.5);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2em;
+    z-index: 10000;
+    display: none;
+  `;
+
+  // Append overlay to body
+  document.body.appendChild(loadingOverlay);
+
+  const jsonOutput = {
+    incidentName: incident.name,
+    incidentDate: incident.datetime,
+    incidentNotes: incident.notes,
+    patients: rows.map(r => ({
+      patientId: r.patientId,
+      severity: r.severity,
+      bestDest: r.bestDest,
+      minutes: r.minutes,
+      score: r.score
+    })),
+    generatedAt: new Date().toISOString()
+  };
+
   btn.onclick = async () => {
+    loadingOverlay.style.display = 'flex'; // Show loading
     try {
+      console.log(jsonOutput);
       const response = await fetch('http://127.0.0.1:8000/generate-report/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ rows })  // wrap in an object if backend expects `rows`
+        body: JSON.stringify(jsonOutput)
       });
 
       if (!response.ok) {
         throw new Error('Failed to generate report');
       }
 
-      const htmlString = await response.text();
-      const blob = new Blob([htmlString], { type: 'text/html' });
+      const htmlString = await response.json();
+      const blob = new Blob([htmlString.message], { type: 'text/html' });
       window.open(URL.createObjectURL(blob), '_blank');
-
     } catch (err) {
       console.error('Error generating report:', err);
       alert('Failed to generate report.');
+    } finally {
+      loadingOverlay.style.display = 'none'; // Hide loading
     }
   };
 
   document.body.appendChild(btn);
 }
+
 
 
 addReportButton(assignments);
