@@ -194,40 +194,39 @@ console.log('Results');
 console.log(results);
 
 // Make a dictionary of destId and minutes pairs
-const travelByDest = {};
+/* Travel Times from Incident to Destination Hospital 1 * 13 OD Matrix Essentially */
+// const travelByDest = {};
 
-results.forEach(r => {
-  if (r.status === 'fulfilled') {
-    const { destName, minutes } = r.value;
+// results.forEach(r => {
+//   if (r.status === 'fulfilled') {
+//     const { destName, minutes } = r.value;
 
-    if (!destName) {
-      console.warn('Route returned no destId', r.value);
-      return;
-    }
-    if (!Number.isFinite(minutes)) {
-      console.warn('Bad minutes for', destName, r.value);
-      return;
-    }
-    travelByDest[destName] = minutes;
-  } else {
-    console.error('Route failed:', r.reason);
-  }
-});
+//     if (!destName) {
+//       console.warn('Route returned no destId', r.value);
+//       return;
+//     }
+//     if (!Number.isFinite(minutes)) {
+//       console.warn('Bad minutes for', destName, r.value);
+//       return;
+//     }
+//     travelByDest[destName] = minutes;
+//   } else {
+//     console.error('Route failed:', r.reason);
+//   }
+// });
 
 // Fast lookup: destName → full route solve object
+/* Analagous to the dictionary above but contains the whole route */
 const routeByDest = Object.fromEntries(
   results
     .filter(r => r.status === 'fulfilled')
     .map(r => [r.value.destName, r.value]) // destName came from solveODPair
 );
 
-console.log('travel by dest');
-console.log(travelByDest);
-
 const assignments = patients.map(p => {
   const scored = hospitals
     .map(h => {
-      const minutes = travelByDest[h.name];
+      const minutes = routeByDest[h.name].minutes;
       return {
         dest: h,
         minutes,
@@ -475,53 +474,3 @@ function addReportButton(rows) {
 
 
 addReportButton(assignments);
-
-// Custom OD Cost Matrix Function
-// async function addRouteLayer (dest) {
-//   const stops = [
-//     new Stop({ geometry: { x: incident.lon, y: incident.lat } }),
-//     new Stop({ geometry: { x: dest.lon, y: dest.lat } })
-//   ];
-
-//   const rl = new RouteLayer({
-//     defaultSymbols: {
-//       stops: new RouteStopSymbols({
-//         last: new SimpleMarkerSymbol({
-//           style: 'diamond',
-//           size: 12,
-//           color: 'red',
-//           outline: { color: 'white' }
-//         }),
-//         first: new SimpleMarkerSymbol({
-//           style: 'x',
-//           size: 14,
-//           color: 'black',
-//           outline: { color: 'black' }
-//         })
-//       })
-//     },
-//     stops
-//   });
-
-//   map.add(rl); // unsolved layers won’t draw yet
-
-//   try {
-//     const solveResult = await rl.solve({ apiKey: esriConfig.apiKey });
-//     rl.update(solveResult); // now the polyline + directions render
-
-//     console.log(solveResult);
-
-//     // Simple popup for the whole route
-//     // ---- attach a popup to the graphic that represents the whole route ----
-//     const mins = rl.routeInfo.totalDuration.toFixed(1);
-//     rl.routeInfo.popupTemplate = {
-//       title: `${mins}&nbsp;min drive`,
-//       content: `Distance: ${(rl.routeInfo.totalDistance / 1000).toFixed(1)} km`
-//     };
-//   } catch (err) {
-//     console.error(`Route solve failed for ${dest.name}`, err);
-//   }
-// }
-
-/* 5 ▸ Kick off all four solves in parallel -------------------------- */
-//await Promise.all(hospitals.map(addRouteLayer));

@@ -5,7 +5,8 @@ export default [
     tbsa: 15,
     inhalation: false,
     priority: 'yellow',
-    expectedBedDays: 5
+    expectedBedDays: 5,
+    burnType: "thermal"
   },
   {
     id: 'adult‑severe',
@@ -13,7 +14,8 @@ export default [
     tbsa: 40,
     inhalation: true,
     priority: 'red',
-    expectedBedDays: 14
+    expectedBedDays: 14,
+    burnType: "thermal"
   },
   {
     id: 'pediatric‑severe',
@@ -21,6 +23,7 @@ export default [
     tbsa: 20,
     inhalation: true,
     priority: 'red',
-    expectedBedDays: 14
+    expectedBedDays: 14,
+    burnType: "thermal"
   }
 ];
