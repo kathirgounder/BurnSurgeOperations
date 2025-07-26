@@ -1,5 +1,8 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from pydantic import BaseModel
+from typing import List
 from openai import OpenAI
+from starlette.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 import os
 
@@ -9,10 +12,20 @@ env = os.environ
 
 app = FastAPI()
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-@app.get("/generate-report/{content}")
-async def generate_report(content):
-    prompt = content
+class ReportRequest(BaseModel):
+    rows: List[dict]
+
+@app.post("/generate-report")
+async def generate_report(request: ReportRequest):
+    prompt = request.rows
 
     client = OpenAI(
         api_key=env.get('OPENAI_KEY'),
