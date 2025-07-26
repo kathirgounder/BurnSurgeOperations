@@ -29,11 +29,26 @@ const incidentGraphic = {
   attributes: {
     NAME: incident.name,
     // shove anything else you want to use in the shader / popup:
-    id      : incident.id,
-    datetime: incident.datetime,
-    severity: incident.severity
+    ID      : incident.id,
+    DATETIME: incident.datetime,
+    SEVERITY: incident.severity
   }
 };
+
+// Create an instance of the custom layer with 4 initial graphics.
+const incidentLayer = new FlashingIncidentLayer({
+  pulseFreq: 5,
+  coreRadius: 8.0,
+  glowRadius: 24.0,
+  sparkAmpl:  0.10,    // obvious crackle
+  sparkFreq:  60.0,     // rapid shimmer
+  sizePx: 70,
+  popupTemplate: {
+    title: '{NAME}',
+    content: 'Severity: {SEVERITY}.'
+  },
+  graphics: [incidentGraphic]
+});
 
 const hillshade = new TileLayer({
   portalItem: {
@@ -84,8 +99,11 @@ const sbcgs = hospitals.filter(h => h.type === "Burn Center").map(h => ({
     type: 'point'
   }),
   attributes: {
-    NAME: h.name
-    // add any other attributes you want here
+    NAME:           h.name,
+    beds:           h.bedsAvailable ?? "n/a",
+    capability:     Math.round(h.capability * 100),    // 95 → 95 %
+    peds:           h.hasPedsUnit ? "Yes" : "No",
+    tele:           h.hasTeleBurn ? "Yes" : "No"
   }
 }))
 
@@ -97,15 +115,24 @@ const brcgs = hospitals.filter(h => h.type === "Burn Resource Center").map(h => 
     type: 'point'
   }),
   attributes: {
-    NAME: h.name
-    // add any other attributes you want here
+    NAME:           h.name,
+    beds:           h.bedsAvailable ?? "n/a",
+    capability:     Math.round(h.capability * 100),
+    peds:           h.hasPedsUnit ? "Yes" : "No",
+    tele:           h.hasTeleBurn ? "Yes" : "No"
   }
 }))
 
 const brcLayer = new CrossLayer({
   popupTemplate: {
-    title: 'Flashing Hospital Layer',
-    content: 'Hello World'
+    title: "{NAME} (Resource Center)",
+    content: `
+      <ul>
+        <li><b>Beds open:</b> {beds}</li>
+        <li><b>Burn capability:</b> {capability}%</li>
+        <li><b>Pediatric unit:</b> {peds}</li>
+        <li><b>Tele‑burn enabled:</b> {tele}</li>
+      </ul>`
   },
   sizePx     : 70,
 
@@ -125,8 +152,14 @@ map.add(brcLayer);
 
 const sbcLayer = new CrossLayer({
   popupTemplate: {
-    title: 'Flashing Hospital Layer',
-    content: 'Hello World'
+    title: "{NAME} (Burn Center)",
+    content: `
+      <ul>
+        <li><b>Beds open:</b> {beds}</li>
+        <li><b>Burn capability:</b> {capability}%</li>
+        <li><b>Pediatric unit:</b> {peds}</li>
+        <li><b>Tele‑burn enabled:</b> {tele}</li>
+      </ul>`
   },
   sizePx     : 70,
 
@@ -145,20 +178,7 @@ const sbcLayer = new CrossLayer({
 
 map.add(sbcLayer);
 
-// Create an instance of the custom layer with 4 initial graphics.
-const incidentLayer = new FlashingIncidentLayer({
-  pulseFreq: 5,
-  coreRadius: 8.0,
-  glowRadius: 24.0,
-  sparkAmpl:  0.10,    // obvious crackle
-  sparkFreq:  60.0,     // rapid shimmer
-  sizePx: 70,
-  popupTemplate: {
-    title: 'Flashing Incident Layer',
-    content: 'Population: {POPULATION}.'
-  },
-  graphics: [incidentGraphic]
-});
+
 
 map.add(incidentLayer);
 
