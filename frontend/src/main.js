@@ -13,10 +13,8 @@ import { FlashingIncidentLayer } from './flashingIncidentLayer.js';
 import { CrossLayer } from './breathingCrossLayer.js';
 import { solveODPair, computeScore } from './routeService.js';
 
-import * as serviceArea from "@arcgis/core/rest/serviceArea.js";
-import ServiceAreaParams from "@arcgis/core/rest/support/ServiceAreaParameters.js";
-import FeatureSet from "@arcgis/core/rest/support/FeatureSet.js";
-import Graphic from "@arcgis/core/Graphic.js";
+import { createServiceArea } from './serviceArea.js';
+import Point from "@arcgis/core/geometry/Point.js";
 
 /* ── 1.  API key (covers basemap + OD) ───────────────────── */
 esriConfig.apiKey =
@@ -72,7 +70,7 @@ const view = new MapView({
   container: 'viewDiv',
   map,
   center: [incident.lon, incident.lat, 34.1],
-  zoom: 13
+  zoom: 11
 });
 
 // Pick Incident
@@ -86,78 +84,19 @@ map.add(routeLayer);
 const serviceAreaLayer = new GraphicsLayer({ title: 'Service Area' });
 map.add(serviceAreaLayer);
 
+const point = new Point({
+  longitude: incident.lon,
+  latitude: incident.lat,
+  spatialReference: { wkid: 4326 }
+});
+
+createServiceArea({point: point, serviceAreaLayer: serviceAreaLayer, view: view})
+
 view.when(() => {
   view.on("click", async (event) => {
     const point = event.mapPoint;
 
-    // Clear old service area graphics
-    serviceAreaLayer.removeAll();
-
-    // Add clicked point as a white marker
-    const locationGraphic = new Graphic({
-      geometry: point,
-      symbol: {
-        type: "simple-marker",
-        color: "white",
-        size: 8,
-        outline: {
-          color: "black",
-          width: 1
-        }
-      }
-    });
-    serviceAreaLayer.add(locationGraphic);
-
-    const driveTimeCutoffs = [5, 10, 15]; // minutes
-    const featureSet = new FeatureSet({
-      features: [locationGraphic]
-    });
-
-    const params = new ServiceAreaParams({
-      facilities: featureSet,
-      defaultBreaks: driveTimeCutoffs,
-      trimOuterPolygon: true,
-      outSpatialReference: view.spatialReference
-    });
-
-    const serviceAreaUrl =
-      "https://route-api.arcgis.com/arcgis/rest/services/World/ServiceAreas/NAServer/ServiceArea_World/solveServiceArea";
-
-    try {
-      const result = await serviceArea.solve(serviceAreaUrl, params);
-      console.log(result.serviceAreaPolygons.features)
-      if (result.serviceAreaPolygons?.features?.length) {
-        result.serviceAreaPolygons.features.forEach((polygon) => {
-        const breakValue = polygon.attributes.ToBreak;
-
-        console.log(polygon.attributes)
-
-        let fillColor;
-        if (breakValue === 5) {
-          fillColor = "rgba(5, 255, 5, 0.5)"; // 5 min – green
-        } else if (breakValue === 10) {
-          fillColor = "rgba(246, 255, 0, 0.5)"; // 10 min – yellow
-        } else if (breakValue === 15) {
-          fillColor = "rgba(255, 153, 0, 0.5)"; // 15 min – orange
-        } else {
-          fillColor = "rgba(255, 50, 50, 0.5)";
-        }
-
-        polygon.symbol = {
-          type: "simple-fill",
-          color: fillColor,
-          outline: {
-            color: [0, 0, 0, 0.4],
-            width: 1
-          }
-        };
-
-        serviceAreaLayer.add(polygon);
-      });
-      }
-    } catch (err) {
-      console.error("Service area error:", err);
-    }
+    createServiceArea({point: point, serviceAreaLayer: serviceAreaLayer, view: view, size: 8})
   });
 });
 
