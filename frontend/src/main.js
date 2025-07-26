@@ -1,42 +1,42 @@
-import esriConfig from '@arcgis/core/config.js';
-import Map from '@arcgis/core/Map.js';
-import MapView from '@arcgis/core/views/MapView.js';
-import GraphicsLayer from '@arcgis/core/layers/GraphicsLayer.js';
-import * as webMercatorUtils from '@arcgis/core/geometry/support/webMercatorUtils.js';
-import TileLayer from '@arcgis/core/layers/TileLayer.js';
-import Basemap from "@arcgis/core/Basemap.js"
+import esriConfig from "@arcgis/core/config.js";
+import Map from "@arcgis/core/Map.js";
+import MapView from "@arcgis/core/views/MapView.js";
+import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer.js";
+import * as webMercatorUtils from "@arcgis/core/geometry/support/webMercatorUtils.js";
+import TileLayer from "@arcgis/core/layers/TileLayer.js";
+import Basemap from "@arcgis/core/Basemap.js";
 
-import { hospitals } from './data/hospitals.js';
-import incidents from './data/incidents.js';
-import patientTmpls from './data/patients.js';
-import { CustomLayer } from './flashingIncidentLayer.js';
-import { solveODPair, computeScore } from './routeService.js';
+import { hospitals } from "./data/hospitals.js";
+import incidents from "./data/incidents.js";
+import patientTmpls from "./data/patients.js";
+import { CustomLayer } from "./flashingIncidentLayer.js";
+import { solveODPair, computeScore } from "./routeService.js";
 
 /* ── 1.  API key (covers basemap + OD) ───────────────────── */
 esriConfig.apiKey =
-  'AAPTxy8BH1VEsoebNVZXo8HurExiheV8fp-Y5bdvR4oy2dC-XI7t-pbEluS39zbJeg0GaiY7Vp5WjXY_ze7MroCgHxBCRuJUHYcNagIHynfKvB5cMm-rvGo_V_yJ4WlBKew2aNjHsyU88PXm_FXwJh3_w_0MpxGfgoFapEas5kzZd5I23PwVuJLoo811sevETSYTS1NnT5zxgCdFTJwgeBwyOFJ86mFJk9OBPS3TVbJ5oBctSqPdMnm5zNLTHpkQcfSEAT1_d9LFzwbr';
+  "AAPTxy8BH1VEsoebNVZXo8HurExiheV8fp-Y5bdvR4oy2dC-XI7t-pbEluS39zbJeg0GaiY7Vp5WjXY_ze7MroCgHxBCRuJUHYcNagIHynfKvB5cMm-rvGo_V_yJ4WlBKew2aNjHsyU88PXm_FXwJh3_w_0MpxGfgoFapEas5kzZd5I23PwVuJLoo811sevETSYTS1NnT5zxgCdFTJwgeBwyOFJ86mFJk9OBPS3TVbJ5oBctSqPdMnm5zNLTHpkQcfSEAT1_d9LFzwbr";
 
 /* ── 2.  Map bootstrap ──────────────────────────────────── */
 const incident = incidents[0];
 
 const hillshade = new TileLayer({
   portalItem: {
-    id: '1b243539f4514b6ba35e7d995890db1d' // world hillshade
+    id: "1b243539f4514b6ba35e7d995890db1d", // world hillshade
   }, // Living Atlas hillshade service
-  blendMode: 'overlay', // lets relief shading show through the dark base
+  blendMode: "overlay", // lets relief shading show through the dark base
   opacity: 1, // tweak to taste
 });
 
 const basemap = await Basemap.fromId("dark-gray");
 console.log(basemap);
 
-const map = new Map({ basemap, layers: [hillshade]});
+const map = new Map({ basemap, layers: [hillshade] });
 
 const view = new MapView({
-  container: 'viewDiv',
+  container: "viewDiv",
   map,
   center: [incident.lon, incident.lat, 34.1],
-  zoom: 13
+  zoom: 13,
 });
 
 // Pick Incident
@@ -44,46 +44,84 @@ const view = new MapView({
 const layer = new GraphicsLayer();
 map.add(layer);
 
-const routeLayer = new GraphicsLayer({ title: 'Routes' });
+const routeLayer = new GraphicsLayer({ title: "Routes" });
 map.add(routeLayer);
 
-const gs = incidents.map(i => ({
+const gs = incidents.map((i) => ({
   geometry: webMercatorUtils.geographicToWebMercator({
     x: i.lon,
     y: i.lat,
     spatialReference: { wkid: 4326 },
-    type: 'point'
+    type: "point",
   }),
   attributes: {
-    NAME: i.name
+    NAME: i.name,
     // add any other attributes you want here
-  }
+  },
 }));
 // Create an instance of the custom layer with 4 initial graphics.
 const incidentLayer = new CustomLayer({
   popupTemplate: {
-    title: 'Flashing Incident Layer',
-    content: 'Population: {POPULATION}.'
+    title: "Flashing Incident Layer",
+    content: "Population: {POPULATION}.",
   },
-  graphics: gs
+  graphics: gs,
 });
 
 map.add(incidentLayer);
 
-
-function expandPatients (manifest, templates) {
-  const lut = Object.fromEntries(templates.map(t => [t.id, t]));
-  return manifest.flatMap(stub =>
+function expandPatients(manifest, templates) {
+  const lut = Object.fromEntries(templates.map((t) => [t.id, t]));
+  return manifest.flatMap((stub) =>
     Array.from({ length: stub.count }, (_, i) => ({
       ...lut[stub.template],
-      uid: `${stub.template}-${i + 1}`
+      uid: `${stub.template}-${i + 1}`,
     }))
   );
 }
 
 const patients = expandPatients(incident.patients, patientTmpls);
 
-console.log(patients);
+console.log("patients", patients);
+
+const patientAssignments = patients.map((patient) => {
+  return { patientId: patient.uid, severity: patient.priority, patient };
+});
+
+console.log("patientAssignments", patientAssignments);
+
+function addPatientAssignmentsList(patientAssignments) {
+  const calciteActionBar = document.getElementById("patient-carousel");
+  patientAssignments.forEach((patientAssignment) => {
+    const calciteAction = document.createElement("calcite-action");
+    if (patientAssignment.patientId.includes("mod")) {
+      calciteAction.icon = "exclamation-point-f";
+    } else if (patientAssignment.patientId.includes("severe")) {
+      calciteAction.icon = "exclamation-mark-triangle-f";
+    }
+    calciteAction.loading = true;
+    calciteAction.disabled = true;
+    calciteAction.className = "patient-assignment-action";
+    calciteAction.text = patientAssignment.patientId;
+    calciteAction.textEnabled = true;
+    calciteAction.dataset.pid = patientAssignment.patientId; //  <-- NOW present
+    calciteAction.onclick = () =>
+      highlightRouteFor(patientAssignment, calciteAction);
+    calciteActionBar.appendChild(calciteAction);
+  });
+}
+
+function setPatientAssignmentsListReady() {
+  const patientAssignmentActions = document.getElementsByClassName(
+    "patient-assignment-action"
+  );
+  for (const patientAssignmentAction of patientAssignmentActions) {
+    patientAssignmentAction.loading = false;
+    patientAssignmentAction.disabled = false;
+  }
+}
+
+addPatientAssignmentsList(patientAssignments);
 
 // parallel OD solves, will finish executing even if some of the pair solves fail and we can filter
 // for proper promise fulfillment
@@ -95,56 +133,58 @@ console.log(patients);
 //     geometry: routeInfo.geometry
 // };
 const results = await Promise.allSettled(
-  hospitals.map(h => solveODPair(incident, h))
+  hospitals.map((h) => solveODPair(incident, h))
 );
 
-console.log('Results');
+setPatientAssignmentsListReady();
+
+console.log("Results");
 console.log(results);
 
 // Make a dictionary of destId and minutes pairs
 const travelByDest = {};
 
-results.forEach(r => {
-  if (r.status === 'fulfilled') {
+results.forEach((r) => {
+  if (r.status === "fulfilled") {
     const { destName, minutes } = r.value;
 
     if (!destName) {
-      console.warn('Route returned no destId', r.value);
+      console.warn("Route returned no destId", r.value);
       return;
     }
     if (!Number.isFinite(minutes)) {
-      console.warn('Bad minutes for', destName, r.value);
+      console.warn("Bad minutes for", destName, r.value);
       return;
     }
     travelByDest[destName] = minutes;
   } else {
-    console.error('Route failed:', r.reason);
+    console.error("Route failed:", r.reason);
   }
 });
 
 // Fast lookup: destName → full route solve object
 const routeByDest = Object.fromEntries(
   results
-    .filter(r => r.status === 'fulfilled')
-    .map(r => [r.value.destName, r.value]) // destName came from solveODPair
+    .filter((r) => r.status === "fulfilled")
+    .map((r) => [r.value.destName, r.value]) // destName came from solveODPair
 );
 
-console.log('travel by dest');
+console.log("travel by dest");
 console.log(travelByDest);
 
-const assignments = patients.map(p => {
+const assignments = patients.map((p) => {
   const scored = hospitals
-    .map(h => {
+    .map((h) => {
       const minutes = travelByDest[h.name];
       return {
         dest: h,
         minutes,
-        score: computeScore({ minutes, dest: h, patient: p })
+        score: computeScore({ minutes, dest: h, patient: p }),
       };
     })
     .sort((a, b) => a.score - b.score);
 
-  console.log('Scored');
+  console.log("Scored");
   console.log(scored);
 
   return {
@@ -153,7 +193,7 @@ const assignments = patients.map(p => {
     patient: p,
     bestDest: scored[0].dest.name,
     minutes: scored[0].minutes.toFixed(1),
-    score: scored[0].score.toFixed(1)
+    score: scored[0].score.toFixed(1),
   };
 });
 
@@ -181,53 +221,37 @@ console.table(assignments);
 //     });
 //   });
 
-function addPatientCarousel (rows) {
-  const bar = document.createElement('div');
-  bar.style.cssText = `
-    position:absolute;top:10px;right:10px;z-index:9999;
-    display:flex;gap:4px;background:#fff;padding:6px;border-radius:6px`;
-
-  rows.forEach(r => {
-    const btn = document.createElement('button');
-    btn.textContent = r.patientId;
-    btn.dataset.pid = r.patientId; //  <-- NOW present
-    btn.onclick = () => highlightRouteFor(r, btn);
-    bar.appendChild(btn);
-  });
-  document.body.appendChild(bar);
-}
-
-function makeFlowLineSymbol (baseColor) {
+function makeFlowLineSymbol(baseColor) {
   // baseColor can be a hex string ("#30B37E") or [r,g,b]
   return {
-    type: 'simple-line',
-    style: 'solid',
+    type: "simple-line",
+    style: "solid",
     width: 3, // thin
-    cap: 'round',
-    join: 'round',
-    color: [...ArcGISColor(baseColor), 0.7] // 35 % opacity
+    cap: "round",
+    join: "round",
+    color: [...ArcGISColor(baseColor), 0.7], // 35 % opacity
   };
 }
 
 // helper to convert hex → [r,g,b]
-function ArcGISColor (c) {
+function ArcGISColor(c) {
   if (Array.isArray(c)) return c; // already [r,g,b]
   const n = parseInt(c.slice(1), 16);
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
-async function highlightRouteFor (row, btn) {
+async function highlightRouteFor(row, btn) {
   // 1. Clear old
   routeLayer.removeAll();
 
   // 2. Rank
   const ranked = hospitals
-    .map(dest => {
+    .map((dest) => {
       const route = routeByDest[dest.name];
       if (!route) return null; // skip if OD failed
       const score = computeScore({
         minutes: route.minutes,
         dest,
-        patient: row.patient // full patient object
+        patient: row.patient, // full patient object
       });
       return { dest, route, score };
     })
@@ -240,26 +264,26 @@ async function highlightRouteFor (row, btn) {
     const scoreVal = computeScore({
       minutes: route.minutes,
       dest,
-      patient: row.patient
+      patient: row.patient,
     });
     routeLayer.add({
       geometry: route.geometry,
       symbol: makeFlowLineSymbol(
-        scoreVal < 1000 ? '#30B37E' : scoreVal < 5000 ? '#EFB95B' : '#E54C4C'
+        scoreVal < 1000 ? "#30B37E" : scoreVal < 5000 ? "#EFB95B" : "#E54C4C"
       ), // any RGBA → last value is 55 % opacity
       attributes: {
         destName: dest.name,
         minutes: route.minutes.toFixed(1),
         score: scoreVal.toFixed(1),
-        patientId: row.patientId
+        patientId: row.patientId,
       },
       popupTemplate: {
-        title: '{destName}',
+        title: "{destName}",
         content: `
             Patient: <b>{patientId}</b><br>
             Travel time: <b>{minutes} min</b><br>
-            Score: <b>{score}</b>`
-      }
+            Score: <b>{score}</b>`,
+      },
     });
   });
 
@@ -275,20 +299,18 @@ async function highlightRouteFor (row, btn) {
 
   // 5. Highlight active button
   if (window.activeBtn) {
-    window.activeBtn.style.background = '';
-    window.activeBtn.style.color = '';
+    window.activeBtn.style.background = "";
+    window.activeBtn.style.color = "";
   }
   window.activeBtn = btn;
-  btn.style.background = '#007AC2';
-  btn.style.color = '#fff';
+  btn.style.background = "#007AC2";
+  btn.style.color = "#fff";
 }
 
-addPatientCarousel(assignments);
-
-function renderAssignmentsTable (rows) {
-  const tbl = document.createElement('table');
+function renderAssignmentsTable(rows) {
+  const tbl = document.createElement("table");
   tbl.style.cssText =
-    'border-collapse:collapse;margin:8px;font-family:sans-serif';
+    "border-collapse:collapse;margin:8px;font-family:sans-serif";
   tbl.innerHTML = `
       <thead>
         <tr>
@@ -302,7 +324,7 @@ function renderAssignmentsTable (rows) {
       <tbody>
         ${rows
           .map(
-            r => `
+            (r) => `
           <tr>
             <td style="border:1px solid #ccc;padding:4px">${r.patientId}</td>
             <td style="border:1px solid #ccc;padding:4px">${r.severity}</td>
@@ -311,7 +333,7 @@ function renderAssignmentsTable (rows) {
             <td style="border:1px solid #ccc;padding:4px">${r.score}</td>
           </tr>`
           )
-          .join('')}
+          .join("")}
       </tbody>`;
   document.body.appendChild(tbl);
 }
@@ -319,7 +341,7 @@ function renderAssignmentsTable (rows) {
 renderAssignmentsTable(assignments);
 
 /* -------- inline mini‑report -------- */
-function buildReportHTML (rows) {
+function buildReportHTML(rows) {
   return `
     <html><head><title>${incident.name} – After‑Action</title>
       <style>
@@ -337,12 +359,12 @@ function buildReportHTML (rows) {
         <tr><th>Patient</th><th>Severity</th><th>Destination</th><th>Minutes</th><th>Score</th></tr>
         ${rows
           .map(
-            r => `<tr>
+            (r) => `<tr>
           <td>${r.patientId}</td><td>${r.severity}</td><td>${r.bestDest}</td>
           <td>${r.minutes}</td><td>${r.score}</td>
         </tr>`
           )
-          .join('')}
+          .join("")}
       </table>
       <p><em>Generated ${new Date().toLocaleString()}</em></p>
     </body></html>`;
@@ -350,37 +372,35 @@ function buildReportHTML (rows) {
 
 function addReportButton(rows) {
   // BROKEN, NEED TO FIX
-  const btn = document.createElement('button');
-  btn.textContent = 'Generate Report';
-  btn.style.cssText = 'position:absolute;top:10px;left:10px;z-index:9999';
-  
+  const btn = document.createElement("button");
+  btn.textContent = "Generate Report";
+  btn.style.cssText = "position:absolute;top:10px;left:10px;z-index:9999";
+
   btn.onclick = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:8000/generate-report/', {
-        method: 'POST',
+      const response = await fetch("http://127.0.0.1:8000/generate-report/", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ rows })  // wrap in an object if backend expects `rows`
+        body: JSON.stringify({ rows }), // wrap in an object if backend expects `rows`
       });
 
       if (!response.ok) {
-        throw new Error('Failed to generate report');
+        throw new Error("Failed to generate report");
       }
 
       const htmlString = await response.text();
-      const blob = new Blob([htmlString], { type: 'text/html' });
-      window.open(URL.createObjectURL(blob), '_blank');
-
+      const blob = new Blob([htmlString], { type: "text/html" });
+      window.open(URL.createObjectURL(blob), "_blank");
     } catch (err) {
-      console.error('Error generating report:', err);
-      alert('Failed to generate report.');
+      console.error("Error generating report:", err);
+      alert("Failed to generate report.");
     }
   };
 
   document.body.appendChild(btn);
 }
-
 
 addReportButton(assignments);
 

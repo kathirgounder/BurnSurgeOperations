@@ -12,6 +12,10 @@
       rel="stylesheet"
       href="https://js.arcgis.com/4.33/esri/themes/light/main.css"
     />
+    <script
+      type="module"
+      src="https://js.arcgis.com/calcite-components/3.2.1/calcite.esm.js"
+    ></script>
 
     <script type="importmap">
       {
@@ -32,8 +36,15 @@
     </style>
   </head>
   <body>
-    <div id="viewDiv"></div>
-
+    <calcite-shell>
+      <div id="viewDiv"></div>
+      <calcite-action-bar
+        position="end"
+        slot="panel-end"
+        expanded="true"
+        id="patient-carousel"
+      ></calcite-action-bar>
+    </calcite-shell>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
