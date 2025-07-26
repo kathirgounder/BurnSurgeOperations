@@ -73,11 +73,15 @@ const CustomLayerView2D = BaseLayerViewGL2D.createSubclass({
 
 uniform float u_current_time;          // seconds since load
 varying vec2  v_offset;                // (‑0.5 … +0.5)
+uniform vec3 u_core_color;
+uniform vec3 u_glow_color;
+uniform float u_pulse_freq;
 
 // ── STYLE PARAMETERS ─────────────────────────────────────────────
 const float SIZE_PX      = 70.0;           // ↔ must match vertex SIZE
 const float CORE_RADIUS  =  4.0;           // px  (was 6)
 const float GLOW_RADIUS  = 16.0;           // px  (slightly tighter)
+
 const vec3  CORE_COLOR   = vec3(1.00, 0.25, 0.25);   // hot red
 const vec3  GLOW_COLOR   = vec3(0.85, 0.10, 0.10);   // deep crimson
 const float PULSE_FREQ   = 2.0;            // Hz  – gentle breathing
@@ -106,7 +110,7 @@ void main(void)
 
     // 4) smooth global pulse (every fragment in this point brightens together)
     float pulse = 1.0 + PULSE_AMPL *
-                  sin(u_current_time * 6.28318 * PULSE_FREQ);
+                  sin(u_current_time * 6.28318 * u_pulse_freq);
 
     // 5) light, desynchronised sparkle (one value per point, not per pixel)
     //    – converts INT vec2 to one number by flooring the quad’s screen coords
@@ -117,7 +121,7 @@ void main(void)
     float a = clamp(core + glow, 0.0, 1.0) * pulse * spark;
 
     // 7) final additive colour
-    vec3  rgb = core * CORE_COLOR + glow * GLOW_COLOR;
+    vec3  rgb = core * u_core_color + glow * u_glow_color;
     gl_FragColor = vec4(rgb * a, a);
 }
 
@@ -151,6 +155,9 @@ void main(void)
     this.uTransform = gl.getUniformLocation(this.program, 'u_transform');
     this.uDisplay = gl.getUniformLocation(this.program, 'u_display');
     this.uCurrentTime = gl.getUniformLocation(this.program, 'u_current_time');
+    this.uCoreColor = gl.getUniformLocation(this.program, 'u_core_color');
+    this.uGlowColor = gl.getUniformLocation(this.program, 'u_glow_color');
+    this.uPulseFreq   = gl.getUniformLocation(this.program, 'u_pulse_freq');
 
     // Create the vertex and index buffer. They are initially empty. We need to track the
     // size of the index buffer because we use indexed drawing.
@@ -225,6 +232,8 @@ void main(void)
     gl.uniformMatrix3fv(this.uTransform, false, this.transform);
     gl.uniformMatrix3fv(this.uDisplay, false, this.display);
     gl.uniform1f(this.uCurrentTime, performance.now() / 1000.0);
+    gl.uniform3fv(this.uCoreColor, this.layer.coreColor);
+    gl.uniform3fv(this.uGlowColor, this.layer.glowColor);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
     gl.enableVertexAttribArray(this.aPosition);
@@ -381,6 +390,11 @@ void main(void)
 
 // Subclass the custom layer view from GraphicsLayer.
 export const CustomLayer = GraphicsLayer.createSubclass({
+  properties:{
+    coreColor:{value : [1.00, 0.25, 0.25]},
+    glowColor:{value: [0.85, 0.10, 0.10]},
+    pulseFreq: { value: 2.0 }
+  },
   createLayerView: function (view) {
     // We only support MapView, so we only need to return a
     // custom layer view for the `2d` case.

@@ -47,7 +47,7 @@ map.add(layer);
 const routeLayer = new GraphicsLayer({ title: 'Routes' });
 map.add(routeLayer);
 
-const gs = incidents.map(i => ({
+const incidentgs = incidents.map(i => ({
   geometry: webMercatorUtils.geographicToWebMercator({
     x: i.lon,
     y: i.lat,
@@ -59,13 +59,40 @@ const gs = incidents.map(i => ({
     // add any other attributes you want here
   }
 }));
+
+const hospitalgs = hospitals.map(h => ({
+  geometry: webMercatorUtils.geographicToWebMercator({
+    x: h.lon, 
+    y: h.lat,
+    spatialReference: { wkid: 4326},
+    type: 'point'
+  }),
+  attributes: {
+    NAME: h.name
+    // add any other attributes you want here
+  }
+}))
+
+const hospitalLayer = new CustomLayer({
+  popupTemplate: {
+    title: 'Flashing Hospital Layer',
+    content: 'Hello World'
+  },
+  coreColor: [0.80, 0.80, 0.85],   // soft silver‑white
+  glowColor: [0.55, 0.55, 0.60],   // bluish‑steel halo
+  pulseFreq: 0.6,                   // one blink every ~1.7 s
+  graphics: hospitalgs
+})
+
+map.add(hospitalLayer);
+
 // Create an instance of the custom layer with 4 initial graphics.
 const incidentLayer = new CustomLayer({
   popupTemplate: {
     title: 'Flashing Incident Layer',
     content: 'Population: {POPULATION}.'
   },
-  graphics: gs
+  graphics: incidentgs
 });
 
 map.add(incidentLayer);
