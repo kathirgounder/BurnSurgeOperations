@@ -8,8 +8,7 @@ export default [
     patients: [
       { template: 'adult‑mod', count: 1 },
       { template: 'adult‑severe', count: 1 },
-      { template: 'pediatric‑severe', count: 1 },
-      {test}
+      { template: 'pediatric‑severe', count: 1 }
     ],
     notes:
       'WUI ignition with rapid uphill run; mix of smoke and flame injuries.'
