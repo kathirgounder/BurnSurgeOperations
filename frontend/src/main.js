@@ -83,7 +83,7 @@ const hospitalLayer = new CrossLayer({
   sizePx     : 70,
 
   coreRadius : 12,         // arm length 18 px
-  armWidth   : 0.07,       // 0.13 × 70 ≈ 9 px bar thickness
+  armWidth   : 0.06,       // 0.13 × 70 ≈ 9 px bar thickness
   glowRadius : 18,
 
   pulseFreq  : 0.6,
