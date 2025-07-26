@@ -18,7 +18,22 @@ esriConfig.apiKey =
   'AAPTxy8BH1VEsoebNVZXo8HurExiheV8fp-Y5bdvR4oy2dC-XI7t-pbEluS39zbJeg0GaiY7Vp5WjXY_ze7MroCgHxBCRuJUHYcNagIHynfKvB5cMm-rvGo_V_yJ4WlBKew2aNjHsyU88PXm_FXwJh3_w_0MpxGfgoFapEas5kzZd5I23PwVuJLoo811sevETSYTS1NnT5zxgCdFTJwgeBwyOFJ86mFJk9OBPS3TVbJ5oBctSqPdMnm5zNLTHpkQcfSEAT1_d9LFzwbr';
 
 /* ── 2.  Map bootstrap ──────────────────────────────────── */
-const incident = incidents[0];
+const incident = incidents[Math.floor(Math.random() * incidents.length)];
+const incidentGraphic = {
+  geometry: webMercatorUtils.geographicToWebMercator({
+    x: incident.lon,
+    y: incident.lat,
+    spatialReference: { wkid: 4326 },
+    type: 'point'
+  }),
+  attributes: {
+    NAME: incident.name,
+    // shove anything else you want to use in the shader / popup:
+    id      : incident.id,
+    datetime: incident.datetime,
+    severity: incident.severity
+  }
+};
 
 const hillshade = new TileLayer({
   portalItem: {
@@ -48,18 +63,18 @@ map.add(layer);
 const routeLayer = new GraphicsLayer({ title: 'Routes' });
 map.add(routeLayer);
 
-const incidentgs = incidents.map(i => ({
-  geometry: webMercatorUtils.geographicToWebMercator({
-    x: i.lon,
-    y: i.lat,
-    spatialReference: { wkid: 4326 },
-    type: 'point'
-  }),
-  attributes: {
-    NAME: i.name
-    // add any other attributes you want here
-  }
-}));
+// const incidentgs = incident.map(i => ({
+//   geometry: webMercatorUtils.geographicToWebMercator({
+//     x: i.lon,
+//     y: i.lat,
+//     spatialReference: { wkid: 4326 },
+//     type: 'point'
+//   }),
+//   attributes: {
+//     NAME: i.name
+//     // add any other attributes you want here
+//   }
+// }));
 
 const sbcgs = hospitals.filter(h => h.type === "Burn Center").map(h => ({
   geometry: webMercatorUtils.geographicToWebMercator({
@@ -142,7 +157,7 @@ const incidentLayer = new FlashingIncidentLayer({
     title: 'Flashing Incident Layer',
     content: 'Population: {POPULATION}.'
   },
-  graphics: incidentgs
+  graphics: [incidentGraphic]
 });
 
 map.add(incidentLayer);
