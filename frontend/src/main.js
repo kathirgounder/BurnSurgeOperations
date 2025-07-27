@@ -1168,6 +1168,11 @@ async function highlightRouteFor(row, btn) {
     });
   });
 
+  map.reorder(routeLayer, map.layers.length - 1);
+  map.reorder(sbcLayer, map.layers.length - 1);
+  map.reorder(brcLayer, map.layers.length - 1);
+  map.reorder(incidentLayer, map.layers.length - 1);
+  
   // 4. Zoom
   if (routeLayer.graphics.length) {
     const fullExtent = routeLayer.graphics.reduce(

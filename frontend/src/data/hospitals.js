@@ -9,6 +9,7 @@ export const hospitals = [
     capability: 1,
     hasPedsUnit: false,
     hasTeleBurn: true,
+    county: "LA"
   },
   {
     name: "LAC Harbor‑UCLA Medical Center",
@@ -19,6 +20,7 @@ export const hospitals = [
     capability: 2,
     hasPedsUnit: false,
     hasTeleBurn: false,
+    county: "LA"
   },
   {
     name: "Cedars‑Sinai Medical Center",
@@ -29,6 +31,7 @@ export const hospitals = [
     capability: 1,
     hasPedsUnit: false,
     hasTeleBurn: true,
+    county: "LA"
   },
   {
     name: "Los Angeles General MC",
@@ -39,6 +42,7 @@ export const hospitals = [
     capability: 2,
     hasPedsUnit: false,
     hasTeleBurn: false,
+    county: "LA"
   },
   {
     name: "Children's Hospital LA",
@@ -49,6 +53,7 @@ export const hospitals = [
     capability: 1,
     hasPedsUnit: true, // key for paediatric burns
     hasTeleBurn: true,
+    county: "LA"
   },
   {
     name: "MemorialCare Long Beach MC",
@@ -59,6 +64,7 @@ export const hospitals = [
     capability: 1,
     hasPedsUnit: false,
     hasTeleBurn: true,
+    county: "LA"
   },
   {
     name: "California Hospital MC",
@@ -69,6 +75,7 @@ export const hospitals = [
     capability: 2,
     hasPedsUnit: false,
     hasTeleBurn: false,
+    county: "LA"
   },
   {
     name: "Pomona Valley Hospital MC",
@@ -79,6 +86,7 @@ export const hospitals = [
     capability: 1,
     hasPedsUnit: false,
     hasTeleBurn: false,
+    county: "LA"
   },
   {
     name: "Northridge Hospital MC",
@@ -89,6 +97,7 @@ export const hospitals = [
     capability: 1,
     hasPedsUnit: false,
     hasTeleBurn: true,
+    county: "LA"
   },
   {
     name: "Providence Holy Cross MC",
@@ -99,6 +108,7 @@ export const hospitals = [
     capability: 4,
     hasPedsUnit: false,
     hasTeleBurn: false,
+    county: "LA"
   },
   {
     name: "St. Mary MC (Long Beach)",
@@ -109,6 +119,7 @@ export const hospitals = [
     capability: 1,
     hasPedsUnit: false,
     hasTeleBurn: false,
+    county: "LA"
   },
   {
     name: "Ronald Reagan UCLA MC",
@@ -119,6 +130,7 @@ export const hospitals = [
     capability: 2,
     hasPedsUnit: true,
     hasTeleBurn: true,
+    county: "LA"
   },
   {
     name: "Henry Mayo Newhall Hospital",
@@ -129,6 +141,7 @@ export const hospitals = [
     capability: 1,
     hasPedsUnit: false,
     hasTeleBurn: false,
+    county: "LA"
   },
   {
     name: "Huntington Hospital",
@@ -139,6 +152,7 @@ export const hospitals = [
     capability: 1,
     hasPedsUnit: false,
     hasTeleBurn: true,
+    county: "LA"
   },
 
   /* ─────────────────── Certified Burn Centers (capability ≥ 0.9) ─────────────────── */
@@ -151,6 +165,7 @@ export const hospitals = [
     capability: 5,
     hasPedsUnit: false,
     hasTeleBurn: true,
+    county: "LA"
   },
   {
     name: "LA General Burn Unit",
@@ -161,6 +176,7 @@ export const hospitals = [
     capability: 5,
     hasPedsUnit: false,
     hasTeleBurn: true,
+    county: "LA"
   },
   {
     name: "Grossman Burn Center (West Hills)",
@@ -171,6 +187,7 @@ export const hospitals = [
     capability: 5,
     hasPedsUnit: false,
     hasTeleBurn: true,
+    county: "LA"
   },
   {
     name: "Torrance Memorial Burn Center",
@@ -181,6 +198,7 @@ export const hospitals = [
     capability: 5,
     hasPedsUnit: false,
     hasTeleBurn: true,
+    county: "LA"
   },
   {
     name: "UC Irvine Burn Center",
@@ -191,6 +209,7 @@ export const hospitals = [
     capability: 5,
     hasPedsUnit: true,
     hasTeleBurn: true,
+    county: "Orange"
   },
   {
     name: "Orange County Global MC",
@@ -201,6 +220,7 @@ export const hospitals = [
     capability: 5,
     hasPedsUnit: false,
     hasTeleBurn: true,
+    county: "Orange"
   },
   {
     name: "Arrowhead Regional Medical Center",
@@ -211,5 +231,6 @@ export const hospitals = [
     capability: 5,
     hasPedsUnit: true,
     hasTeleBurn: false,
+    county: "SanBernardino"
   },
 ];
