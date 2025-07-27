@@ -1,5 +1,8 @@
 export const generalHospitals = [
   { name: "Verdugo Hills Hospital", lat: 34.20453, lon: -118.216024, phone: "(818) 952-2210", category: "911 Receiving", address: "1812 Verdugo Blvd., Glendale, CA 91208" },
+  { name: "Hoag Hospital - Newport Beach", lat: 33.624649, lon: -117.929169, phone: "(949) 764-4624", category: "911 Receiving", address: "1 Hoag Dr, Newport Beach, CA 92663" },
+  { name: "Foothill Regional Medical Center", lat: 33.730283, lon: -117.8285393, phone: "14662 Newport Ave, Tustin, CA 92780", category: "911 Receiving", address: "14662 Newport Ave, Tustin, CA 92780" },
+  { name: "Garden Grove Hospital and Medical Center", lat: 33.775108, lon: -117.91317, phone: "12601 Garden Grove Blvd, Garden Grove, CA 92843", category: "911 Receiving", address: "12601 Garden Grove Blvd, Garden Grove, CA 92843" },
   { name: "Barlow Respiratory Hospital - Los Angeles (Main Campus)", lat: 34.075693, lon: -118.248312, phone: "(213) 250-4200", category: "Respiratory Hospital", address: "2000 Stadium Way, Los Angeles, CA 90026" },
   { name: "Glendora Community Hospital", lat: 34.127307, lon: -117.865075, phone: "(626) 852-5015", category: "911 Receiving", address: "150 W. Route 66, Glendora, CA 91740" },
   { name: "Providence Little Company Of Mary Medical Center - Torrance", lat: 33.838634, lon: -118.357113, phone: "(310) 543-5807", category: "911 Receiving", address: "4101 Torrance Blvd., Torrance, CA 90503" },
