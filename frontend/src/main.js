@@ -36,7 +36,9 @@ esriConfig.apiKey =
 
 /* ── 2.  Map bootstrap ──────────────────────────────────── */
 // Use selected incident from landing page, or fall back to random selection
-const incident = window.selectedIncident || incidents[Math.floor(Math.random() * incidents.length)];
+const incident =
+  window.selectedIncident ||
+  incidents[Math.floor(Math.random() * incidents.length)];
 const incidentGraphic = {
   geometry: webMercatorUtils.geographicToWebMercator({
     x: incident.lon,
@@ -745,9 +747,11 @@ function displayGenerateReportPopover() {
   for (const popover of popovers) {
     popover.remove();
   } // remove old popover if exists
-  
+
   const generateReportPopover = document.createElement("calcite-popover");
-  const generateReportActionBtn = document.getElementById("generate-report-action-btn");
+  const generateReportActionBtn = document.getElementById(
+    "generate-report-action-btn"
+  );
   document.body.appendChild(generateReportPopover);
   generateReportPopover.id = "generate-report-popover";
   generateReportPopover.className = "burn-surge-ops-popover";
@@ -756,17 +760,18 @@ function displayGenerateReportPopover() {
   generateReportPopover.offsetSkidding = 6;
   generateReportPopover.referenceElement = generateReportActionBtn;
   generateReportPopover.placement = "leading";
-  
+
   const panelElement = document.createElement("calcite-panel");
   panelElement.closable = true;
   panelElement.addEventListener("calcitePanelClose", () => {
     generateReportPopover.remove();
   });
   panelElement.heading = "Generate Report";
-  
+
   // Add description text
   const descriptionElement = document.createElement("div");
-  descriptionElement.style.cssText = "padding: 16px; color: var(--calcite-ui-text-3);";
+  descriptionElement.style.cssText =
+    "padding: 16px; color: var(--calcite-ui-text-3);";
   descriptionElement.innerHTML = `
     <p>Generate a comprehensive report of the current incident including:</p>
     <ul style="margin: 8px 0; padding-left: 20px;">
@@ -777,7 +782,7 @@ function displayGenerateReportPopover() {
     </ul>
   `;
   panelElement.appendChild(descriptionElement);
-  
+
   // Add the generate report button
   const generateButton = document.createElement("calcite-button");
   generateButton.id = "generate-report-btn";
@@ -786,21 +791,21 @@ function displayGenerateReportPopover() {
   generateButton.width = "full";
   generateButton.appearance = "solid";
   generateButton.color = "blue";
-  
+
   // Check if we have assignments to generate report for
   if (!RESULTS_HAVE_LOADED) {
     generateButton.disabled = true;
     generateButton.innerHTML = "No assignments available";
   }
-  
+
   generateButton.onclick = async () => {
     if (!RESULTS_HAVE_LOADED) {
       return;
     }
-    
+
     generateButton.loading = true;
     generateButton.disabled = true;
-    
+
     try {
       // Get the current assignments from the global scope or recreate them
       const assignments = patients.map((p) => {
@@ -815,7 +820,7 @@ function displayGenerateReportPopover() {
           })
           .sort((a, b) => a.score - b.score);
 
-          console.log(scored[0])
+        console.log(scored[0]);
 
         return {
           patientId: p.uid,
@@ -857,10 +862,9 @@ function displayGenerateReportPopover() {
       const htmlString = await response.json();
       const blob = new Blob([htmlString.message], { type: "text/html" });
       window.open(URL.createObjectURL(blob), "_blank");
-      
+
       // Close the popover after successful generation
       generateReportPopover.remove();
-      
     } catch (err) {
       console.error("Error generating report:", err);
       alert("Failed to generate report. Please try again.");
@@ -869,12 +873,29 @@ function displayGenerateReportPopover() {
       generateButton.disabled = false;
     }
   };
-  
+
   panelElement.appendChild(generateButton);
   generateReportPopover.appendChild(panelElement);
 }
 
 addGenerateReportActionBtn();
+
+function renderResultsSuccessAlert() {
+  const resultsSuccessAlert = document.createElement("calcite-alert");
+  resultsSuccessAlert.open = true;
+  resultsSuccessAlert.kind = "success";
+  const resultsSuccessAlertTitle = document.createElement("div");
+  resultsSuccessAlertTitle.slot = "title";
+  resultsSuccessAlertTitle.innerHTML = "Results Generated!";
+  const resultsSuccessAlertMessage = document.createElement("div");
+  resultsSuccessAlertMessage.slot = "message";
+  resultsSuccessAlertMessage.innerHTML =
+    "Patient Assignments have been generated. Check Patient Assignments on the action bar to check them out!";
+
+  resultsSuccessAlert.appendChild(resultsSuccessAlertTitle);
+  resultsSuccessAlert.appendChild(resultsSuccessAlertMessage);
+  document.body.appendChild(resultsSuccessAlert);
+}
 
 // parallel OD solves, will finish executing even if some of the pair solves fail and we can filter
 // for proper promise fulfillment
@@ -892,6 +913,7 @@ async function run() {
     );
     setPatientAssignmentsListReady();
     setResultsHaveLoaded();
+    renderResultsSuccessAlert();
 
     console.log("Results");
     console.log(results);
@@ -924,7 +946,7 @@ async function run() {
         .map((r) => [r.value.destName, r.value]) // destName came from solveODPair
     );
 
-    console.log(results)
+    console.log(results);
 
     console.log("travel by dest");
     console.log(travelByDest);
@@ -940,7 +962,6 @@ async function run() {
               score: computeScore({ minutes, dest: h, patient: p }),
             };
           }
-
         })
         .sort((a, b) => a.score - b.score);
 
@@ -1170,5 +1191,3 @@ function buildReportHTML(rows) {
       <p><em>Generated ${new Date().toLocaleString()}</em></p>
     </body></html>`;
 }
-
-
