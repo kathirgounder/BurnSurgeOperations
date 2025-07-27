@@ -734,6 +734,24 @@ addToggleLayersActionBtn();
 //     meters:   routeInfo.totalDistance,
 //     geometry: routeInfo.geometry
 // };
+
+function renderResultsSuccessAlert() {
+  const resultsSuccessAlert = document.createElement("calcite-alert");
+  resultsSuccessAlert.open = true;
+  resultsSuccessAlert.kind = "success";
+  const resultsSuccessAlertTitle = document.createElement("div");
+  resultsSuccessAlertTitle.slot = "title";
+  resultsSuccessAlertTitle.innerHTML = "Results Generated!";
+  const resultsSuccessAlertMessage = document.createElement("div");
+  resultsSuccessAlertMessage.slot = "message";
+  resultsSuccessAlertMessage.innerHTML =
+    "Patient Assignments have been generated. Check Patient Assignments on the action bar to check them out!";
+
+  resultsSuccessAlert.appendChild(resultsSuccessAlertTitle);
+  resultsSuccessAlert.appendChild(resultsSuccessAlertMessage);
+  document.body.appendChild(resultsSuccessAlert);
+}
+
 async function run() {
   if (filteredHospitals.length > 0) {
     const results = await Promise.allSettled(
@@ -741,6 +759,7 @@ async function run() {
     );
     setPatientAssignmentsListReady();
     setResultsHaveLoaded();
+    renderResultsSuccessAlert();
 
     console.log("Results");
     console.log(results);
