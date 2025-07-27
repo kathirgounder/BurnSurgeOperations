@@ -10,8 +10,24 @@ export default [
       { template: 'adult‑severe', count: 1 },
       { template: 'pediatric‑severe', count: 1 }
     ],
+    county: "LA",
     notes:
       'WUI ignition with rapid uphill run; mix of smoke and flame injuries.'
+  },
+  {
+    id      : "ontario‑airport‑fuel‑fire",
+    name    : "Ontario Airport Fuel‑Truck Flash",
+    lat     : 34.056,
+    lon     : -117.598,
+    datetime: "2025‑07‑27T11:40:00‑07:00",
+    patients: [
+      { template: "adult‑mod",    count: 1 },
+      { template: "adult‑severe", count: 1 },
+      { template: "pediatric-severe", count: 1},
+    ],
+    county: "SanBernardino",
+    notes:
+      "Jet‑A transfer hose failure; multiple ramp workers with partial‑thickness burns."
   },
   {
     id: "wildfire‑chino‑hills",
@@ -23,6 +39,7 @@ export default [
       { template: "adult‑mod",     count: 3 },
       { template: "pediatric‑severe", count: 1 }
     ],
+    county: "LA",
     notes: "Fast‑moving canyon fire with limited local burn resources."
   },
   {
@@ -35,6 +52,7 @@ export default [
       { template: "adult‑mod",     count: 3 },
       { template: "adult‑severe",  count: 3 }
     ],
+    county: "LA",
     notes: "Sabotage blast in methane‑tank area; thick smoke and flash burns among workers."
   },
   {
@@ -48,6 +66,7 @@ export default [
       { template: "adult‑severe",  count: 1 },
       { template: "pediatric‑severe", count: 1},
     ],
+    county: "LA",
     notes: "Precision drone explodes over Anduril Industries campus (Costa Mesa Technology Corridor)."
   },
   {
@@ -59,6 +78,7 @@ export default [
     patients: [
       { template: "adult‑mod",     count: 6 }
     ],
+    county: "LA",
     notes: "Lithography solvent flash ignites; mostly 1st–2nd degree burns on hands and forearms."
   },
   {
@@ -71,6 +91,7 @@ export default [
       { template: "adult‑mod",        count: 2 },
       { template: "pediatric‑severe", count: 1 }
     ],
+    county: "LA",
     notes: "40 mph gusts push flames uphill near La Palma & Weir Canyon; limited local burn resources."
   },
 ];
