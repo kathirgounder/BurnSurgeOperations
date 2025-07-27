@@ -28,6 +28,7 @@ let RESULTS_IS_LOADING = false;
 let hospitalSelections = {};
 let filteredHospitals = [];
 let layerConfigs;
+let routeFeatureLayer;
 // initialize hospitalSelections
 hospitals.forEach((hospital) => (hospitalSelections[hospital.name] = true));
 
@@ -1025,7 +1026,7 @@ function displayToggleLayersPopover() {
     },
     {
       name: "Routes",
-      layers: [routeLayer],
+      layers: [routeLayer, routeFeatureLayer],
       id: "route-layer",
       description: "Patient transport routes",
     },
@@ -1498,7 +1499,7 @@ async function highlightRouteFor(row, btn) {
   ];
 
   // 3. Create FeatureLayer
-  const routeFeatureLayer = new FeatureLayer({
+  routeFeatureLayer = new FeatureLayer({
     geometryType: "polyline",
     source: routeGraphics.map((g, idx) => {
       g.attributes = { ...g.attributes, ObjectId: idx + 1 };
