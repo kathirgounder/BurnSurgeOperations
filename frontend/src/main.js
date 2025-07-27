@@ -430,6 +430,7 @@ function displayPatientAssignmentsListPopover(patientAssignments) {
       patientAssignmentBtn.disabled = true;
       const toolTip = document.createElement("calcite-tooltip");
       toolTip.innerHTML = "Please select at least 2 hospitals";
+      toolTip.placement = "left";
       toolTip.referenceElement = patientAssignmentBtn;
       document.body.appendChild(toolTip);
     }
@@ -464,6 +465,63 @@ function setPatientAssignmentsListReady() {
 }
 
 addPatientAssignmentsListActionBtn(patientAssignments);
+
+// Add Back to Landing Page functionality
+function addBackToLandingActionBtn() {
+  const actionBar = document.getElementById("burn-surge-ops-action-bar");
+  const backToLandingActionButton = document.createElement("calcite-action");
+  backToLandingActionButton.id = "back-to-landing-action-btn";
+  backToLandingActionButton.icon = "arrow-left";
+  backToLandingActionButton.text = "Back to Landing";
+  backToLandingActionButton.textEnabled = true;
+  backToLandingActionButton.onclick = () => goBackToLanding();
+  actionBar.appendChild(backToLandingActionButton);
+}
+
+function goBackToLanding() {
+  // Clear any existing popovers
+  const popovers = document.getElementsByClassName("burn-surge-ops-popover");
+  for (const popover of popovers) {
+    popover.remove();
+  }
+  
+  // Clear any existing alerts
+  const alerts = document.querySelectorAll("calcite-alert");
+  for (const alert of alerts) {
+    alert.remove();
+  }
+  
+  // Clear any existing tables
+  const tables = document.querySelectorAll("table");
+  for (const table of tables) {
+    table.remove();
+  }
+  
+  // Reset global variables
+  window.selectedIncident = null;
+  HOSPITALS_ARE_SELECTED = true;
+  RESULTS_HAVE_LOADED = false;
+  RESULTS_IS_LOADING = false;
+  
+  // Reset hospital selections
+  hospitals.forEach((hospital) => (hospitalSelections[hospital.name] = true));
+  filteredHospitals = [];
+  
+  // Clear route layer
+  if (routeLayer) {
+    routeLayer.removeAll();
+  }
+  
+  // Hide dashboard and show landing page
+  const dashboardContainer = document.getElementById("dashboard-container");
+  const landingPage = document.getElementById("landing-page");
+  
+  dashboardContainer.classList.remove("active");
+  landingPage.style.display = "flex";
+  
+  // Force a page reload to properly reset the landing page
+  window.location.reload();
+}
 
 function addHospitalSelectionsActionBtn(hospitals) {
   const actionBar = document.getElementById("burn-surge-ops-action-bar");
@@ -877,6 +935,9 @@ function displayGenerateReportPopover() {
 }
 
 addGenerateReportActionBtn();
+
+// Add back button last so it appears at the bottom of the action bar
+addBackToLandingActionBtn();
 
 function renderResultsSuccessAlert() {
   const resultsSuccessAlert = document.createElement("calcite-alert");
