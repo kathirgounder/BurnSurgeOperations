@@ -4,7 +4,9 @@ import MapView from "@arcgis/core/views/MapView.js";
 import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer.js";
 import * as webMercatorUtils from "@arcgis/core/geometry/support/webMercatorUtils.js";
 import TileLayer from "@arcgis/core/layers/TileLayer.js";
+import FeatureLayer from "@arcgis/core/layers/FeatureLayer.js";
 import Basemap from "@arcgis/core/Basemap.js";
+import Legend from "@arcgis/core/widgets/Legend.js";
 
 import { hospitals } from "./data/hospitals.js";
 import { generalHospitals } from "./data/generalHospitals.js";
@@ -25,6 +27,7 @@ let RESULTS_HAVE_LOADED = false;
 let RESULTS_IS_LOADING = false;
 let hospitalSelections = {};
 let filteredHospitals = [];
+let layerConfigs;
 // initialize hospitalSelections
 hospitals.forEach((hospital) => (hospitalSelections[hospital.name] = true));
 
@@ -156,12 +159,92 @@ const point = new Point({
   spatialReference: { wkid: 4326 },
 });
 
+let serviceAreaFeatureLayer;
+
 createServiceArea({
   point: point,
   serviceAreaLayer: serviceAreaLayer,
   view: view,
 }).then((serviceAreaPolygons) => {
   queryHospitalsInServiceArea(serviceAreaPolygons, generalHospitalsLayer);
+  // 1. Extract graphics from serviceAreaLayer
+  const serviceAreaGraphics = serviceAreaLayer.graphics.toArray
+    ? serviceAreaLayer.graphics.toArray()
+    : serviceAreaLayer.graphics;
+
+  // 2. Define fields for FeatureLayer
+  const serviceAreaFields = [
+    { name: "ObjectId", type: "oid" },
+    { name: "ToBreak", type: "double" }, // Example field, adjust as needed
+    // Add other fields if your polygons have more attributes
+  ];
+
+  // 3. Create FeatureLayer
+  serviceAreaFeatureLayer = new FeatureLayer({
+    geometryType: "polygon",
+    source: serviceAreaGraphics.map((g, idx) => {
+      g.attributes = { ...g.attributes, ObjectId: idx + 1 };
+      return g;
+    }),
+    objectIdField: "ObjectId",
+    fields: serviceAreaFields,
+    popupTemplate: {
+      title: "Service Area",
+      content: `
+      <ul>
+        <li><b>Break Value:</b> {ToBreak}</li>
+      </ul>`,
+    },
+    renderer: {
+      type: "unique-value",
+      field: "ToBreak",
+
+      // symbol: {
+      //   type: "simple-fill",
+      //   color: [102, 204, 255, 0.3], // light blue with transparency
+      //   outline: {
+      //     color: [0, 122, 204, 1],
+      //     width: 2,
+      //   },
+      // },
+      uniqueValueInfos: [
+        {
+          value: 10,
+          label: "5 min",
+          symbol: {
+            type: "simple-fill",
+            color: [5, 255, 5, 0.5], // green
+            outline: { color: [0, 122, 204, 1], width: 2 },
+          },
+        },
+        {
+          value: 20,
+          label: "10 min",
+          symbol: {
+            type: "simple-fill",
+            color: [246, 255, 0, 0.5], // yellow
+            outline: { color: [0, 122, 204, 1], width: 2 },
+          },
+        },
+        {
+          value: 30,
+          label: "15 min",
+          symbol: {
+            type: "simple-fill",
+            color: [255, 153, 0, 0.5], // orange
+            outline: { color: [0, 122, 204, 1], width: 2 },
+          },
+        },
+      ],
+    },
+  });
+  serviceAreaFeatureLayer.visible = false;
+  // Add to map and legend if needed
+  map.add(serviceAreaFeatureLayer, 0);
+  legend.layerInfos.push({
+    layer: serviceAreaFeatureLayer,
+    title: "Service Area",
+  });
 });
 
 /* General OnClick Service Area Functionality */
@@ -281,6 +364,158 @@ map.add(sbcLayer);
 
 map.add(incidentLayer);
 
+// 1. Extract graphics from incidentLayer
+const incidentGraphics = incidentLayer.graphics.toArray
+  ? incidentLayer.graphics.toArray()
+  : incidentLayer.graphics;
+
+// 2. Define fields for FeatureLayer
+const incidentFields = [
+  { name: "ObjectId", type: "oid" },
+  { name: "NAME", type: "string" },
+  { name: "SEVERITY", type: "string" },
+  // Add other fields as needed
+];
+
+// 3. Create FeatureLayer
+const incidentFeatureLayer = new FeatureLayer({
+  source: incidentGraphics.map((g, idx) => {
+    // Ensure each graphic has a unique ObjectId
+    g.attributes = { ...g.attributes, ObjectId: idx + 1 };
+    return g;
+  }),
+  objectIdField: "ObjectId",
+  fields: incidentFields,
+  popupTemplate: {
+    title: "{NAME}",
+    content: "Severity: {SEVERITY}.",
+  },
+  renderer: {
+    label: "Incident Location",
+    type: "simple",
+    symbol: {
+      type: "simple-marker",
+      style: "circle",
+      color: [255, 64, 64, 1], // bright red
+      size: 4,
+      outline: {
+        color: [255, 64, 64, 1], // bright red
+        width: 2,
+      },
+    },
+  },
+});
+
+// 1. Extract graphics
+const sbcGraphics = sbcLayer.graphics.toArray
+  ? sbcLayer.graphics.toArray()
+  : sbcLayer.graphics;
+const brcGraphics = brcLayer.graphics.toArray
+  ? brcLayer.graphics.toArray()
+  : brcLayer.graphics;
+
+// 2. Define fields
+const hospitalFields = [
+  { name: "ObjectId", type: "oid" },
+  { name: "NAME", type: "string" },
+  { name: "beds", type: "string" },
+  { name: "capability", type: "string" },
+  { name: "peds", type: "string" },
+  { name: "tele", type: "string" },
+];
+
+// 3. Create FeatureLayers
+const sbcFeatureLayer = new FeatureLayer({
+  geometryType: "point",
+  source: sbcGraphics.map((g, idx) => {
+    g.attributes = { ...g.attributes, ObjectId: idx + 1 };
+    return g;
+  }),
+  objectIdField: "ObjectId",
+  fields: hospitalFields,
+  popupTemplate: {
+    title: "{NAME} (Burn Center)",
+    content: `
+      <ul>
+        <li><b>Beds open:</b> {beds}</li>
+        <li><b>Burn capability:</b> {capability}%</li>
+        <li><b>Pediatric unit:</b> {peds}</li>
+        <li><b>Tele‑burn enabled:</b> {tele}</li>
+      </ul>`,
+  },
+  renderer: {
+    label: "Specialized Burn Center",
+    type: "simple",
+    symbol: {
+      type: "simple-marker",
+      style: "cross",
+      color: [34, 194, 214, 1], // cyan
+      size: 6,
+      outline: {
+        color: [18, 122, 140, 0.7],
+        width: 2,
+      },
+    },
+  },
+});
+
+const brcFeatureLayer = new FeatureLayer({
+  geometryType: "point",
+  source: brcGraphics.map((g, idx) => {
+    g.attributes = { ...g.attributes, ObjectId: idx + 1 };
+    return g;
+  }),
+  objectIdField: "ObjectId",
+  fields: hospitalFields,
+  popupTemplate: {
+    title: "{NAME} (Resource Center)",
+    content: `
+      <ul>
+        <li><b>Beds open:</b> {beds}</li>
+        <li><b>Burn capability:</b> {capability}%</li>
+        <li><b>Pediatric unit:</b> {peds}</li>
+        <li><b>Tele‑burn enabled:</b> {tele}</li>
+      </ul>`,
+  },
+  renderer: {
+    label: "Burn Resource Center",
+    type: "simple",
+    symbol: {
+      type: "simple-marker",
+      style: "cross",
+      color: [92, 107, 220, 1], // blue
+      size: 6,
+      outline: {
+        color: [32, 41, 86, 0.7],
+        width: 2,
+      },
+    },
+  },
+});
+
+map.add(sbcFeatureLayer);
+map.add(brcFeatureLayer);
+
+map.add(incidentFeatureLayer);
+let generalHospitalsFeatureLayer;
+
+const legend = new Legend({
+  view: view,
+  layerInfos: [
+    {
+      layer: incidentFeatureLayer,
+    },
+    {
+      layer: sbcFeatureLayer,
+    },
+    {
+      layer: brcFeatureLayer,
+    },
+  ],
+});
+
+view.ui.add(legend, "bottom-left");
+
 function queryHospitalsInServiceArea(
   serviceAreaPolygons,
   generalHospitalsLayer
@@ -356,6 +591,62 @@ function queryHospitalsInServiceArea(
 
     generalHospitalsLayer.add(hospitalGraphic);
   });
+
+  // 1. Extract graphics from generalHospitalsLayer
+  const generalHospitalsGraphics = generalHospitalsLayer.graphics.toArray
+    ? generalHospitalsLayer.graphics.toArray()
+    : generalHospitalsLayer.graphics;
+
+  // 2. Define fields for FeatureLayer
+  const generalHospitalsFields = [
+    { name: "ObjectId", type: "oid" },
+    { name: "NAME", type: "string" },
+    { name: "beds", type: "string" },
+    { name: "capability", type: "string" },
+    { name: "peds", type: "string" },
+    { name: "tele", type: "string" },
+  ];
+
+  // 3. Create FeatureLayer
+  generalHospitalsFeatureLayer = new FeatureLayer({
+    geometryType: "point",
+    source: generalHospitalsGraphics.map((g, idx) => {
+      g.attributes = { ...g.attributes, ObjectId: idx + 1 };
+      return g;
+    }),
+    objectIdField: "ObjectId",
+    fields: generalHospitalsFields,
+    popupTemplate: {
+      title: "{NAME}",
+      content: `
+      <ul>
+        <li><b>Beds open:</b> {beds}</li>
+        <li><b>Burn capability:</b> {capability}%</li>
+        <li><b>Pediatric unit:</b> {peds}</li>
+        <li><b>Tele‑burn enabled:</b> {tele}</li>
+      </ul>`,
+    },
+    renderer: {
+      label: "General Hospitals",
+      type: "simple",
+      symbol: {
+        type: "simple-marker",
+        style: "cross",
+        color: [250, 160, 54, 1], // orange color, adjust as needed
+        size: 4,
+        outline: {
+          color: [140, 85, 13, 0.7],
+          width: 2,
+        },
+      },
+    },
+  });
+  generalHospitalsFeatureLayer.visible = false;
+  legend.layerInfos.push({
+    layer: generalHospitalsFeatureLayer,
+  });
+  // layerConfigs[2].layers.push(generalHospitalsFeatureLayer);
+  map.add(generalHospitalsFeatureLayer);
 }
 
 function expandPatients(manifest, templates) {
@@ -692,40 +983,40 @@ function displayToggleLayersPopover() {
   toggleLayersPopover.appendChild(panelElement);
 
   // Define all layers with their display names and references
-  const layerConfigs = [
+  layerConfigs = [
     {
       name: "Incident Layer",
-      layer: incidentLayer,
+      layers: [incidentLayer, incidentFeatureLayer],
       id: "incident-layer",
       description: "Flashing incident location",
     },
     {
       name: "Service Area",
-      layer: serviceAreaLayer,
+      layers: [serviceAreaLayer, serviceAreaFeatureLayer],
       id: "service-area-layer",
       description: "Drive time service areas",
     },
     {
       name: "General Hospitals",
-      layer: generalHospitalsLayer,
+      layers: [generalHospitalsLayer, generalHospitalsFeatureLayer],
       id: "general-hospitals-layer",
       description: "General hospitals in service area",
     },
     {
       name: "Burn Resource Centers",
-      layer: brcLayer,
+      layers: [brcLayer, brcFeatureLayer],
       id: "brc-layer",
       description: "Burn Resource Centers (blue crosses)",
     },
     {
       name: "Burn Centers",
-      layer: sbcLayer,
+      layers: [sbcLayer, sbcFeatureLayer],
       id: "sbc-layer",
       description: "Specialized Burn Centers (cyan crosses)",
     },
     {
       name: "Routes",
-      layer: routeLayer,
+      layers: [routeLayer],
       id: "route-layer",
       description: "Patient transport routes",
     },
@@ -741,10 +1032,9 @@ function displayToggleLayersPopover() {
     layerSwitch.id = config.id;
     layerSwitch.label = config.name;
     layerSwitch.slot = "content-end";
-    layerSwitch.checked = config.layer.visible;
-
+    layerSwitch.checked = config.layers[0].visible;
     layerSwitch.addEventListener("calciteSwitchChange", () => {
-      config.layer.visible = layerSwitch.checked;
+      config.layers.forEach((layer) => (layer.visible = layerSwitch.checked));
     });
 
     layerListItem.appendChild(layerSwitch);
@@ -762,7 +1052,7 @@ function displayToggleLayersPopover() {
   showAllBtn.width = "half";
   showAllBtn.onclick = () => {
     layerConfigs.forEach((config) => {
-      config.layer.visible = true;
+      config.layers.forEach((layer) => (layer.visible = true));
       const switchElement = document.getElementById(config.id);
       if (switchElement) switchElement.checked = true;
     });
@@ -773,7 +1063,7 @@ function displayToggleLayersPopover() {
   hideAllBtn.width = "half";
   hideAllBtn.onclick = () => {
     layerConfigs.forEach((config) => {
-      config.layer.visible = false;
+      config.layers.forEach((layer) => (layer.visible = false));
       const switchElement = document.getElementById(config.id);
       if (switchElement) switchElement.checked = false;
     });
@@ -1123,7 +1413,7 @@ async function highlightRouteFor(row, btn) {
     .sort((a, b) => a.score - b.score) // lower score = better
     .slice(0, 3);
 
-  const RANK_COLORS = ["#4ADE80", "#FACC15", "#F87171"]; 
+  const RANK_COLORS = ["#4ADE80", "#FACC15", "#F87171"];
   // 3. Draw
   ranked.forEach(({ dest, route }, idx) => {
     const scoreVal = computeScore({
@@ -1204,8 +1494,8 @@ function renderAssignmentsTable(rows) {
       </thead>
       <tbody>
         ${rows
-      .map(
-        (r) => `
+          .map(
+            (r) => `
           <tr>
             <td style="border:1px solid #ccc;padding:4px">${r.patientId}</td>
             <td style="border:1px solid #ccc;padding:4px">${r.severity}</td>
@@ -1213,8 +1503,8 @@ function renderAssignmentsTable(rows) {
             <td style="border:1px solid #ccc;padding:4px">${r.minutes}</td>
             <td style="border:1px solid #ccc;padding:4px">${r.score}</td>
           </tr>`
-      )
-      .join("")}
+          )
+          .join("")}
       </tbody>`;
   document.body.appendChild(tbl);
 }
@@ -1237,13 +1527,13 @@ function buildReportHTML(rows) {
       <table>
         <tr><th>Patient</th><th>Severity</th><th>Destination</th><th>Minutes</th><th>Score</th></tr>
         ${rows
-      .map(
-        (r) => `<tr>
+          .map(
+            (r) => `<tr>
           <td>${r.patientId}</td><td>${r.severity}</td><td>${r.bestDest}</td>
           <td>${r.minutes}</td><td>${r.score}</td>
         </tr>`
-      )
-      .join("")}
+          )
+          .join("")}
       </table>
       <p><em>Generated ${new Date().toLocaleString()}</em></p>
     </body></html>`;
