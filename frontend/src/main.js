@@ -617,7 +617,6 @@ function displayToggleLayersPopover() {
   document.body.appendChild(toggleLayersPopover);
   toggleLayersPopover.id = "toggle-layers-popover";
   toggleLayersPopover.className = "burn-surge-ops-popover";
-  toggleLayersPopover.style.cssText = "height: 60%;";
   toggleLayersPopover.label = "Toggle Layers";
   toggleLayersPopover.pointerDisabled = true;
   toggleLayersPopover.offsetSkidding = 6;
@@ -625,7 +624,6 @@ function displayToggleLayersPopover() {
   toggleLayersPopover.placement = "leading";
 
   const panelElement = document.createElement("calcite-panel");
-  panelElement.style.cssText = "height: 600px;";
   panelElement.closable = true;
   panelElement.addEventListener("calcitePanelClose", () => {
     toggleLayersPopover.remove();
