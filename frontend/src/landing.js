@@ -18,6 +18,13 @@ function initializeLandingPage() {
     incidentSelect.appendChild(option);
   });
 
+  // Set first incident as default selection
+  if (incidents.length > 0) {
+    incidentSelect.value = "0";
+    window.selectedIncident = incidents[0];
+    dashboardBtn.disabled = false;
+  }
+
   // Handle incident selection
   incidentSelect.addEventListener("calciteSelectChange", (event) => {
     const selectedIndex = parseInt(event.target.value);
