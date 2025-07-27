@@ -519,17 +519,8 @@ function goBackToLanding() {
   dashboardContainer.classList.remove("active");
   landingPage.style.display = "flex";
   
-  // Reset incident select dropdown
-  const incidentSelect = document.getElementById("incident-select");
-  if (incidentSelect) {
-    incidentSelect.value = "";
-  }
-  
-  // Reset dashboard button
-  const dashboardBtn = document.getElementById("dashboard-btn");
-  if (dashboardBtn) {
-    dashboardBtn.disabled = true;
-  }
+  // Force a page reload to properly reset the landing page
+  window.location.reload();
 }
 
 function addHospitalSelectionsActionBtn(hospitals) {
