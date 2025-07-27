@@ -1,10 +1,15 @@
 export const WEIGHTS = {
-  travelTime:   0.7,
-  tbsaPct:     0.4,
-  inhalation:  5,
+  /* patient factors (bigger → more important) */
+  tbsaPct         : 4,        // %TBSA   × 4
+  inhalation      : 25,       // add 25 pts if airway risk
+  pediatricAdj    : 20,       // red‑peds extra bump
 
-  bedCount:         12,   // no open beds
-  // noPeds:       8,    // paediatric need unmet
-  // noTelePenalty:       6,    // severe burn but no tele‑consult 
-  // capabilityBonusMult: -20   // multiplied by dest.capability (negative = bonus)
+  /* destination factors */
+  travelMin       : 3,        // minutes of drive time
+  bedsPenalty     : 40,       // (1 – bedsAvail) × 40
+  capabilityBoost : -30,      // subtract if capability ≥ 4
+  burnCenterBoost : -50,      // subtract if dest.type === "Burn Center"
+  pedsRequiredPen : 9999,     // disqualify if peds burn but no peds unit
+
+  yellowPenalty   :  60,
 };

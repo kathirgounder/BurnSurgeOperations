@@ -948,7 +948,7 @@ async function run() {
 
     console.log("travel by dest");
     console.log(travelByDest);
-
+    console.log(patients);
     const assignments = patients.map((p) => {
       const scored = hospitals
         .map((h) => {

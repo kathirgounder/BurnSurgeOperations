@@ -44,8 +44,9 @@ export default [
     lon: -117.8827,
     datetime: "2025-07-27T10:45:00-07:00",
     patients: [
-      { template: "adult‑mod",     count: 4 },
-      { template: "adult‑severe",  count: 2 }
+      { template: "adult‑mod",     count: 1 },
+      { template: "adult‑severe",  count: 1 },
+      { template: "pediatric‑severe", count: 1},
     ],
     notes: "Precision drone explodes over Anduril Industries campus (Costa Mesa Technology Corridor)."
   },
