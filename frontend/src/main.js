@@ -899,7 +899,7 @@ function displayGenerateReportPopover() {
           severity: r.severity,
           bestDest: r.bestDest,
           minutes: r.minutes,
-          score: 10, //hardcoded to let the api work
+          score: r.score,
         })),
         generatedAt: new Date().toISOString(),
       };
