@@ -5,7 +5,11 @@ import { WEIGHTS as W } from './data/severityWeights.js';
 
 // ─── DEMO‑ONLY scoring: quick & dirty variety ──────────────
 export function computeScore({ minutes, dest, patient }) {
-  return Math.random() * 10000;                       // lower = better
+  let random = Math.random() * 10000
+  if (minutes > 40) {
+    random = random + 1000000000;
+  }
+  return random;                       // lower = better
 }
 
 

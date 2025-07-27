@@ -35,7 +35,8 @@ esriConfig.apiKey =
   "AAPTxy8BH1VEsoebNVZXo8HurExiheV8fp-Y5bdvR4oy2dC-XI7t-pbEluS39zbJeg0GaiY7Vp5WjXY_ze7MroCgHxBCRuJUHYcNagIHynfKvB5cMm-rvGo_V_yJ4WlBKew2aNjHsyU88PXm_FXwJh3_w_0MpxGfgoFapEas5kzZd5I23PwVuJLoo811sevETSYTS1NnT5zxgCdFTJwgeBwyOFJ86mFJk9OBPS3TVbJ5oBctSqPdMnm5zNLTHpkQcfSEAT1_d9LFzwbr";
 
 /* ── 2.  Map bootstrap ──────────────────────────────────── */
-const incident = incidents[Math.floor(Math.random() * incidents.length)];
+// Use selected incident from landing page, or fall back to random selection
+const incident = window.selectedIncident || incidents[Math.floor(Math.random() * incidents.length)];
 const incidentGraphic = {
   geometry: webMercatorUtils.geographicToWebMercator({
     x: incident.lon,
@@ -117,6 +118,7 @@ map.add(routeLayer);
 // })
 
 const serviceAreaLayer = new GraphicsLayer({ title: "Service Area" });
+serviceAreaLayer.visible = false;
 map.add(serviceAreaLayer);
 
 const generalHospitalsLayer = new CrossLayer({
@@ -143,6 +145,7 @@ const generalHospitalsLayer = new CrossLayer({
   coreColor: [0.98, 0.62, 0.21],
   glowColor: [0.55, 0.33, 0.05],
 });
+generalHospitalsLayer.visible = false;
 map.add(generalHospitalsLayer);
 
 const point = new Point({
@@ -725,6 +728,154 @@ function displayToggleLayersPopover() {
 
 addToggleLayersActionBtn();
 
+// Add Generate Report functionality
+function addGenerateReportActionBtn() {
+  const actionBar = document.getElementById("burn-surge-ops-action-bar");
+  const generateReportActionButton = document.createElement("calcite-action");
+  generateReportActionButton.id = "generate-report-action-btn";
+  generateReportActionButton.icon = "file";
+  generateReportActionButton.text = "Generate Report";
+  generateReportActionButton.textEnabled = true;
+  generateReportActionButton.onclick = () => displayGenerateReportPopover();
+  actionBar.appendChild(generateReportActionButton);
+}
+
+function displayGenerateReportPopover() {
+  const popovers = document.getElementsByClassName("burn-surge-ops-popover");
+  for (const popover of popovers) {
+    popover.remove();
+  } // remove old popover if exists
+  
+  const generateReportPopover = document.createElement("calcite-popover");
+  const generateReportActionBtn = document.getElementById("generate-report-action-btn");
+  document.body.appendChild(generateReportPopover);
+  generateReportPopover.id = "generate-report-popover";
+  generateReportPopover.className = "burn-surge-ops-popover";
+  generateReportPopover.label = "Generate Report";
+  generateReportPopover.pointerDisabled = true;
+  generateReportPopover.offsetSkidding = 6;
+  generateReportPopover.referenceElement = generateReportActionBtn;
+  generateReportPopover.placement = "leading";
+  
+  const panelElement = document.createElement("calcite-panel");
+  panelElement.closable = true;
+  panelElement.addEventListener("calcitePanelClose", () => {
+    generateReportPopover.remove();
+  });
+  panelElement.heading = "Generate Report";
+  
+  // Add description text
+  const descriptionElement = document.createElement("div");
+  descriptionElement.style.cssText = "padding: 16px; color: var(--calcite-ui-text-3);";
+  descriptionElement.innerHTML = `
+    <p>Generate a comprehensive report of the current incident including:</p>
+    <ul style="margin: 8px 0; padding-left: 20px;">
+      <li>Incident details and location</li>
+      <li>Patient assignments and severity levels</li>
+      <li>Destination hospitals and travel times</li>
+      <li>Optimization scores</li>
+    </ul>
+  `;
+  panelElement.appendChild(descriptionElement);
+  
+  // Add the generate report button
+  const generateButton = document.createElement("calcite-button");
+  generateButton.id = "generate-report-btn";
+  generateButton.slot = "footer";
+  generateButton.innerHTML = "Generate Report";
+  generateButton.width = "full";
+  generateButton.appearance = "solid";
+  generateButton.color = "blue";
+  
+  // Check if we have assignments to generate report for
+  if (!RESULTS_HAVE_LOADED) {
+    generateButton.disabled = true;
+    generateButton.innerHTML = "No assignments available";
+  }
+  
+  generateButton.onclick = async () => {
+    if (!RESULTS_HAVE_LOADED) {
+      return;
+    }
+    
+    generateButton.loading = true;
+    generateButton.disabled = true;
+    
+    try {
+      // Get the current assignments from the global scope or recreate them
+      const assignments = patients.map((p) => {
+        const scored = hospitals
+          .map((h) => {
+            const minutes = routeByDest[h.name];
+            return {
+              dest: h,
+              minutes: minutes,
+              score: computeScore({ minutes, dest: h, patient: p }),
+            };
+          })
+          .sort((a, b) => a.score - b.score);
+
+          console.log(scored[0])
+
+        return {
+          patientId: p.uid,
+          severity: p.priority,
+          patient: p,
+          bestDest: scored[0].dest.name,
+          minutes: scored[0].minutes.minutes,
+          score: scored[0].score,
+        };
+      });
+
+      const jsonOutput = {
+        incidentName: incident.name,
+        incidentDate: incident.datetime,
+        incidentNotes: incident.notes,
+        patients: assignments.map((r) => ({
+          patientId: r.patientId,
+          severity: r.severity,
+          bestDest: r.bestDest,
+          minutes: r.minutes,
+          score: r.score,
+        })),
+        generatedAt: new Date().toISOString(),
+      };
+
+      console.log(jsonOutput);
+      const response = await fetch("http://127.0.0.1:8000/generate-report/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(jsonOutput),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to generate report");
+      }
+
+      const htmlString = await response.json();
+      const blob = new Blob([htmlString.message], { type: "text/html" });
+      window.open(URL.createObjectURL(blob), "_blank");
+      
+      // Close the popover after successful generation
+      generateReportPopover.remove();
+      
+    } catch (err) {
+      console.error("Error generating report:", err);
+      alert("Failed to generate report. Please try again.");
+    } finally {
+      generateButton.loading = false;
+      generateButton.disabled = false;
+    }
+  };
+  
+  panelElement.appendChild(generateButton);
+  generateReportPopover.appendChild(panelElement);
+}
+
+addGenerateReportActionBtn();
+
 // parallel OD solves, will finish executing even if some of the pair solves fail and we can filter
 // for proper promise fulfillment
 // solveODPair returns an object like this
@@ -773,6 +924,8 @@ async function run() {
         .map((r) => [r.value.destName, r.value]) // destName came from solveODPair
     );
 
+    console.log(results)
+
     console.log("travel by dest");
     console.log(travelByDest);
 
@@ -780,11 +933,14 @@ async function run() {
       const scored = hospitals
         .map((h) => {
           const minutes = travelByDest[h.name];
-          return {
-            dest: h,
-            minutes,
-            score: computeScore({ minutes, dest: h, patient: p }),
-          };
+          if (minutes) {
+            return {
+              dest: h,
+              minutes,
+              score: computeScore({ minutes, dest: h, patient: p }),
+            };
+          }
+
         })
         .sort((a, b) => a.score - b.score);
 
@@ -848,7 +1004,7 @@ async function run() {
     //   });
     renderAssignmentsTable(assignments);
 
-    addReportButton(assignments);
+    // addReportButton(assignments); // This line is removed as per the new_code, as the report generation is now handled by the new addGenerateReportActionBtn
   }
 }
 
@@ -1015,73 +1171,4 @@ function buildReportHTML(rows) {
     </body></html>`;
 }
 
-function addReportButton(rows) {
-  // Create the button
-  const btn = document.createElement("button");
-  btn.textContent = "Generate Report";
-  btn.style.cssText = "position:absolute;top:10px;left:10px;z-index:9999";
 
-  // Create loading overlay
-  const loadingOverlay = document.createElement("div");
-  loadingOverlay.textContent = "Generating Report...";
-  loadingOverlay.style.cssText = `
-    position: fixed;
-    top: 0; left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0,0,0,0.5);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2em;
-    z-index: 10000;
-    display: none;
-  `;
-
-  // Append overlay to body
-  document.body.appendChild(loadingOverlay);
-
-  const jsonOutput = {
-    incidentName: incident.name,
-    incidentDate: incident.datetime,
-    incidentNotes: incident.notes,
-    patients: rows.map((r) => ({
-      patientId: r.patientId,
-      severity: r.severity,
-      bestDest: r.bestDest,
-      minutes: r.minutes,
-      score: r.score,
-    })),
-    generatedAt: new Date().toISOString(),
-  };
-
-  btn.onclick = async () => {
-    loadingOverlay.style.display = "flex"; // Show loading
-    try {
-      console.log(jsonOutput);
-      const response = await fetch("http://127.0.0.1:8000/generate-report/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(jsonOutput),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to generate report");
-      }
-
-      const htmlString = await response.json();
-      const blob = new Blob([htmlString.message], { type: "text/html" });
-      window.open(URL.createObjectURL(blob), "_blank");
-    } catch (err) {
-      console.error("Error generating report:", err);
-      alert("Failed to generate report.");
-    } finally {
-      loadingOverlay.style.display = "none"; // Hide loading
-    }
-  };
-
-  document.body.appendChild(btn);
-}

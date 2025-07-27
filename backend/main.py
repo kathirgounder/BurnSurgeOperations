@@ -24,8 +24,8 @@ class Patient(BaseModel):
     patientId: str
     severity: str
     bestDest: str
-    minutes: str
-    score: str
+    minutes: float
+    score: float
 
 class ReportRequest(BaseModel):
     incidentName: str
