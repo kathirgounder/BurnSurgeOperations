@@ -20,13 +20,13 @@ import * as geometryEngine from "@arcgis/core/geometry/geometryEngine.js";
 import Graphic from "@arcgis/core/Graphic.js";
 
 /* Global Variables */
-let HOSPITALS_ARE_SELECTED = false;
+let HOSPITALS_ARE_SELECTED = true;
 let RESULTS_HAVE_LOADED = false;
 let RESULTS_IS_LOADING = false;
 let hospitalSelections = {};
 let filteredHospitals = [];
 // initialize hospitalSelections
-hospitals.forEach((hospital) => (hospitalSelections[hospital.name] = false));
+hospitals.forEach((hospital) => (hospitalSelections[hospital.name] = true));
 
 let routeByDest;
 
@@ -412,15 +412,21 @@ function displayPatientAssignmentsListPopover(patientAssignments) {
   patientAssignmentsPopover.appendChild(panelElement);
   patientAssignments.forEach((patientAssignment) => {
     const patientAssignmentBtn = document.createElement("calcite-action");
-    if (!HOSPITALS_ARE_SELECTED) {
+    if (!RESULTS_HAVE_LOADED && RESULTS_IS_LOADING) {
+      // when the user clicks the apply button
+      patientAssignmentBtn.loading = true;
+      patientAssignmentBtn.disabled = true;
+    } else if (
+      !RESULTS_HAVE_LOADED ||
+      (!HOSPITALS_ARE_SELECTED && !RESULTS_IS_LOADING)
+    ) {
+      // when the user hasn't clicked the apply button at all, or hasn't selected at least 2 hospitals
+      // a rare case where the user clicks apply, and then toggles off the hospitals leaving less than 2
       patientAssignmentBtn.disabled = true;
       const toolTip = document.createElement("calcite-tooltip");
       toolTip.innerHTML = "Please select at least 2 hospitals";
       toolTip.referenceElement = patientAssignmentBtn;
       document.body.appendChild(toolTip);
-    } else if (!RESULTS_HAVE_LOADED) {
-      patientAssignmentBtn.loading = true;
-      patientAssignmentBtn.disabled = true;
     }
     patientAssignmentBtn.className = "patient-assignment-action";
     patientAssignmentBtn.text = patientAssignment.patientId;
@@ -537,7 +543,12 @@ function displayHospitalSelectionsPopover(hospitals) {
   if (!HOSPITALS_ARE_SELECTED) {
     applyButton.disabled = true;
   }
+  if (RESULTS_IS_LOADING) {
+    applyButton.disabled = true;
+    applyButton.loading = true;
+  }
   applyButton.onclick = () => {
+    RESULTS_HAVE_LOADED = false;
     RESULTS_IS_LOADING = true;
     applyButton.disabled = true;
     applyButton.loading = true;
@@ -567,8 +578,11 @@ function displayHospitalSelectionsPopover(hospitals) {
 function setResultsHaveLoaded() {
   RESULTS_IS_LOADING = false;
   const hospitalApplyBtn = document.getElementById("hospital-apply-btn");
-  hospitalApplyBtn.disabled = false;
-  hospitalApplyBtn.loading = false;
+  if (hospitalApplyBtn) {
+    // case where user keeps Hospital Popover open
+    hospitalApplyBtn.disabled = false;
+    hospitalApplyBtn.loading = false;
+  }
 }
 
 addHospitalSelectionsActionBtn(hospitals);
@@ -590,9 +604,11 @@ function displayToggleLayersPopover() {
   for (const popover of popovers) {
     popover.remove();
   } // remove old popover if exists
-  
+
   const toggleLayersPopover = document.createElement("calcite-popover");
-  const toggleLayersActionBtn = document.getElementById("toggle-layers-action-btn");
+  const toggleLayersActionBtn = document.getElementById(
+    "toggle-layers-action-btn"
+  );
   document.body.appendChild(toggleLayersPopover);
   toggleLayersPopover.id = "toggle-layers-popover";
   toggleLayersPopover.className = "burn-surge-ops-popover";
@@ -602,7 +618,7 @@ function displayToggleLayersPopover() {
   toggleLayersPopover.offsetSkidding = 6;
   toggleLayersPopover.referenceElement = toggleLayersActionBtn;
   toggleLayersPopover.placement = "leading";
-  
+
   const panelElement = document.createElement("calcite-panel");
   panelElement.style.cssText = "height: 600px;";
   panelElement.closable = true;
@@ -610,98 +626,98 @@ function displayToggleLayersPopover() {
     toggleLayersPopover.remove();
   });
   panelElement.heading = "Toggle Layers";
-  
+
   const listElement = document.createElement("calcite-list");
   toggleLayersPopover.appendChild(panelElement);
-  
+
   // Define all layers with their display names and references
   const layerConfigs = [
-    { 
-      name: "Incident Layer", 
-      layer: incidentLayer, 
+    {
+      name: "Incident Layer",
+      layer: incidentLayer,
       id: "incident-layer",
-      description: "Flashing incident location"
+      description: "Flashing incident location",
     },
-    { 
-      name: "Service Area", 
-      layer: serviceAreaLayer, 
+    {
+      name: "Service Area",
+      layer: serviceAreaLayer,
       id: "service-area-layer",
-      description: "Drive time service areas"
+      description: "Drive time service areas",
     },
-    { 
-      name: "General Hospitals", 
-      layer: generalHospitalsLayer, 
+    {
+      name: "General Hospitals",
+      layer: generalHospitalsLayer,
       id: "general-hospitals-layer",
-      description: "General hospitals in service area"
+      description: "General hospitals in service area",
     },
-    { 
-      name: "Burn Resource Centers", 
-      layer: brcLayer, 
+    {
+      name: "Burn Resource Centers",
+      layer: brcLayer,
       id: "brc-layer",
-      description: "Burn Resource Centers (blue crosses)"
+      description: "Burn Resource Centers (blue crosses)",
     },
-    { 
-      name: "Burn Centers", 
-      layer: sbcLayer, 
+    {
+      name: "Burn Centers",
+      layer: sbcLayer,
       id: "sbc-layer",
-      description: "Specialized Burn Centers (cyan crosses)"
+      description: "Specialized Burn Centers (cyan crosses)",
     },
-    { 
-      name: "Routes", 
-      layer: routeLayer, 
+    {
+      name: "Routes",
+      layer: routeLayer,
       id: "route-layer",
-      description: "Patient transport routes"
-    }
+      description: "Patient transport routes",
+    },
   ];
-  
+
   layerConfigs.forEach((config) => {
     const layerListItem = document.createElement("calcite-list-item");
     layerListItem.label = config.name;
     layerListItem.description = config.description;
-    
+
     const layerSwitch = document.createElement("calcite-switch");
     layerSwitch.className = "layer-switch";
     layerSwitch.id = config.id;
     layerSwitch.label = config.name;
     layerSwitch.slot = "content-end";
     layerSwitch.checked = config.layer.visible;
-    
+
     layerSwitch.addEventListener("calciteSwitchChange", () => {
       config.layer.visible = layerSwitch.checked;
     });
-    
+
     layerListItem.appendChild(layerSwitch);
     listElement.appendChild(layerListItem);
   });
-  
+
   panelElement.appendChild(listElement);
-  
+
   // Add "Toggle All" buttons
   const buttonContainer = document.createElement("div");
   buttonContainer.style.cssText = "display: flex; gap: 8px; padding: 8px;";
-  
+
   const showAllBtn = document.createElement("calcite-button");
   showAllBtn.innerHTML = "Show All";
   showAllBtn.width = "half";
   showAllBtn.onclick = () => {
-    layerConfigs.forEach(config => {
+    layerConfigs.forEach((config) => {
       config.layer.visible = true;
       const switchElement = document.getElementById(config.id);
       if (switchElement) switchElement.checked = true;
     });
   };
-  
+
   const hideAllBtn = document.createElement("calcite-button");
   hideAllBtn.innerHTML = "Hide All";
   hideAllBtn.width = "half";
   hideAllBtn.onclick = () => {
-    layerConfigs.forEach(config => {
+    layerConfigs.forEach((config) => {
       config.layer.visible = false;
       const switchElement = document.getElementById(config.id);
       if (switchElement) switchElement.checked = false;
     });
   };
-  
+
   buttonContainer.appendChild(showAllBtn);
   buttonContainer.appendChild(hideAllBtn);
   panelElement.appendChild(buttonContainer);
