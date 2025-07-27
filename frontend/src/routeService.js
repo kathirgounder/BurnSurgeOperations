@@ -9,7 +9,7 @@ import { WEIGHTS as W } from './data/severityWeights.js';
 export function computeScore({ minutes, dest, patient }) {
   /* ---------- HARD FILTERS ---------- */
   const isPedsRed = patient.ageGroup === "pediatric" && patient.priority === "red";
-  if (isPedsRed && ((dest.type != 'Burn Center' && dest.capability < 5) || (!dest.hasPedsUnit))) {
+  if (isPedsRed && ((dest.type != 'Burn Center' && dest.capability < 4) || (!dest.hasPedsUnit))) {
     console.log(dest.name)
     console.log(dest.type)
     console.log(dest.hasPedsUnit)
@@ -35,7 +35,7 @@ export function computeScore({ minutes, dest, patient }) {
 
   /* NEW: keep yellow/moderate burns out of Burn‑Centers */
   if (patient.priority === "yellow" && dest.type === "Burn Center")
-    score += W.yellowPenalty;
+    score *= W.yellowPenalty;
 
   /* tiny jitter so ties don’t all pick the same hospital */
   score += Math.random() * 0.5;

@@ -1123,8 +1123,9 @@ async function highlightRouteFor(row, btn) {
     .sort((a, b) => a.score - b.score) // lower score = better
     .slice(0, 3);
 
+  const RANK_COLORS = ["#4ADE80", "#FACC15", "#F87171"]; 
   // 3. Draw
-  ranked.forEach(({ dest, route }) => {
+  ranked.forEach(({ dest, route }, idx) => {
     const scoreVal = computeScore({
       minutes: route.minutes,
       dest,
@@ -1149,7 +1150,7 @@ async function highlightRouteFor(row, btn) {
     routeLayer.add({
       geometry: route.geometry,
       symbol: makeFlowLineSymbol(
-        scoreVal < 1000 ? "#30B37E" : scoreVal < 5000 ? "#EFB95B" : "#E54C4C"
+        RANK_COLORS[idx] // scoreVal < 1000 ? "#30B37E" : scoreVal < 5000 ? "#EFB95B" : "#E54C4C"
       ), // any RGBA → last value is 55 % opacity
       attributes: {
         destName: dest.name,
