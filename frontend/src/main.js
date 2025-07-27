@@ -44,8 +44,8 @@ const incident =
   incidents[Math.floor(Math.random() * incidents.length)];
 
 let currDate = new Date(incident.datetime);
-const options = { month: 'long', day: 'numeric', year: 'numeric' };
-const formattedDate = currDate.toLocaleDateString('en-US', options);
+const options = { month: "long", day: "numeric", year: "numeric" };
+const formattedDate = currDate.toLocaleDateString("en-US", options);
 
 const incidentGraphic = {
   geometry: webMercatorUtils.geographicToWebMercator({
@@ -77,7 +77,7 @@ const incidentLayer = new FlashingIncidentLayer({
     content: `
             Date: <b>{DATETIME}</b><br>
             County: <b>{COUNTY}</b><br>
-            Notes: <b>{NOTES}</b><br>`
+            Notes: <b>{NOTES}</b><br>`,
   },
   graphics: [incidentGraphic],
 });
@@ -223,7 +223,7 @@ createServiceArea({
           symbol: {
             type: "simple-fill",
             color: [5, 255, 5, 0.5], // green
-            outline: { color: [0, 122, 204, 1], width: 2 },
+            outline: null,
           },
         },
         {
@@ -232,7 +232,7 @@ createServiceArea({
           symbol: {
             type: "simple-fill",
             color: [246, 255, 0, 0.5], // yellow
-            outline: { color: [0, 122, 204, 1], width: 2 },
+            outline: null,
           },
         },
         {
@@ -241,7 +241,7 @@ createServiceArea({
           symbol: {
             type: "simple-fill",
             color: [255, 153, 0, 0.5], // orange
-            outline: { color: [0, 122, 204, 1], width: 2 },
+            outline: null,
           },
         },
       ],
@@ -641,8 +641,8 @@ function queryHospitalsInServiceArea(
       symbol: {
         type: "simple-marker",
         style: "cross",
-        color: [250, 160, 54, 1], // orange color, adjust as needed
-        size: 4,
+        color: [246, 255, 0, 0.5], // yellow
+        size: 6,
         outline: {
           color: [140, 85, 13, 0.7],
           width: 2,
@@ -1461,6 +1461,7 @@ async function highlightRouteFor(row, btn) {
         patientPriority: row.patient.priority,
         patientEbd: row.patient.expectedBedDays,
         patientBurnType: row.patient.burnType,
+        rank: idx + 1, // <-- Add rank attribute (1, 2, 3)
       },
       popupTemplate: {
         title: "{destName}",
@@ -1473,16 +1474,105 @@ async function highlightRouteFor(row, btn) {
             Priority: <b>{patientPriority}</b><br>
             Expected Bed Days: <b>{patientEbd}</b><br>
             Burn Type: <b>{patientBurnType}</b>`,
-            
       },
     });
+  });
+
+  // 1. Extract graphics from routeLayer
+  const routeGraphics = routeLayer.graphics.toArray
+    ? routeLayer.graphics.toArray()
+    : routeLayer.graphics;
+
+  // 2. Define fields for FeatureLayer
+  const routeFields = [
+    { name: "ObjectId", type: "oid" },
+    { name: "destName", type: "string" },
+    { name: "minutes", type: "double" },
+    { name: "score", type: "double" },
+    { name: "patientId", type: "string" },
+    { name: "patientTbsa", type: "string" },
+    { name: "patientInhalation", type: "string" },
+    { name: "patientPriority", type: "string" },
+    { name: "patientEbd", type: "string" },
+    { name: "patientBurnType", type: "string" },
+  ];
+
+  // 3. Create FeatureLayer
+  const routeFeatureLayer = new FeatureLayer({
+    geometryType: "polyline",
+    source: routeGraphics.map((g, idx) => {
+      g.attributes = { ...g.attributes, ObjectId: idx + 1 };
+      return g;
+    }),
+    objectIdField: "ObjectId",
+    fields: routeFields,
+    popupTemplate: {
+      title: "{destName}",
+      content: `
+      <ul>
+        <li><b>Patient:</b> {patientId}</li>
+        <li><b>Travel time:</b> {minutes} min</li>
+        <li><b>Score:</b> {score}</li>
+        <li><b>TBSA:</b> {patientTbsa}</li>
+        <li><b>Inhalation:</b> {patientInhalation}</li>
+        <li><b>Priority:</b> {patientPriority}</li>
+        <li><b>Expected Bed Days:</b> {patientEbd}</li>
+        <li><b>Burn Type:</b> {patientBurnType}</li>
+      </ul>`,
+    },
+    renderer: {
+      type: "unique-value",
+      field: "rank",
+      uniqueValueInfos: [
+        {
+          value: 1,
+          label: "Best Route",
+          symbol: {
+            type: "simple-line",
+            style: "solid",
+            color: [74, 222, 128, 1], // #4ADE80 green
+            width: 4,
+          },
+        },
+        {
+          value: 2,
+          label: "Second Best",
+          symbol: {
+            type: "simple-line",
+            style: "solid",
+            color: [250, 204, 21, 1], // #FACC15 yellow
+            width: 4,
+          },
+        },
+        {
+          value: 3,
+          label: "Third Best",
+          symbol: {
+            type: "simple-line",
+            style: "solid",
+            color: [248, 113, 113, 1], // #F87171 red
+            width: 4,
+          },
+        },
+      ],
+    },
+  });
+
+  // Add to map and legend if needed
+  map.add(routeFeatureLayer);
+  legend.layerInfos = legend.layerInfos.filter(
+    (info) => info.title !== "Routes"
+  );
+  legend.layerInfos.push({
+    layer: routeFeatureLayer,
+    title: "Routes",
   });
 
   map.reorder(routeLayer, map.layers.length - 1);
   map.reorder(sbcLayer, map.layers.length - 1);
   map.reorder(brcLayer, map.layers.length - 1);
   map.reorder(incidentLayer, map.layers.length - 1);
-  
+
   // 4. Zoom
   if (routeLayer.graphics.length) {
     const fullExtent = routeLayer.graphics.reduce(
