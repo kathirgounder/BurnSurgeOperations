@@ -39,6 +39,11 @@ esriConfig.apiKey =
 const incident =
   window.selectedIncident ||
   incidents[Math.floor(Math.random() * incidents.length)];
+
+let currDate = new Date(incident.datetime);
+const options = { month: 'long', day: 'numeric', year: 'numeric' };
+const formattedDate = currDate.toLocaleDateString('en-US', options);
+
 const incidentGraphic = {
   geometry: webMercatorUtils.geographicToWebMercator({
     x: incident.lon,
@@ -50,8 +55,9 @@ const incidentGraphic = {
     NAME: incident.name,
     // shove anything else you want to use in the shader / popup:
     ID: incident.id,
-    DATETIME: incident.datetime,
-    SEVERITY: incident.severity,
+    DATETIME: formattedDate,
+    COUNTY: incident.county,
+    NOTES: incident.notes,
   },
 };
 
@@ -65,7 +71,10 @@ const incidentLayer = new FlashingIncidentLayer({
   sizePx: 70,
   popupTemplate: {
     title: "{NAME}",
-    content: "Severity: {SEVERITY}.",
+    content: `
+            Date: <b>{DATETIME}</b><br>
+            County: <b>{COUNTY}</b><br>
+            Notes: <b>{NOTES}</b><br>`
   },
   graphics: [incidentGraphic],
 });
@@ -1157,13 +1166,24 @@ async function highlightRouteFor(row, btn) {
         minutes: route.minutes.toFixed(1),
         score: scoreVal.toFixed(1),
         patientId: row.patientId,
+        patientTbsa: row.patient.tbsa,
+        patientInhalation: row.patient.inhalation,
+        patientPriority: row.patient.priority,
+        patientEbd: row.patient.expectedBedDays,
+        patientBurnType: row.patient.burnType,
       },
       popupTemplate: {
         title: "{destName}",
         content: `
             Patient: <b>{patientId}</b><br>
             Travel time: <b>{minutes} min</b><br>
-            Score: <b>{score}</b>`,
+            Score: <b>{score}</b><br>
+            TBSA: <b>{patientTbsa}</b><br>
+            Inhalation: <b>{patientInhalation}</b><br>
+            Priority: <b>{patientPriority}</b><br>
+            Expected Bed Days: <b>{patientEbd}</b><br>
+            Burn Type: <b>{patientBurnType}</b>`,
+            
       },
     });
   });
