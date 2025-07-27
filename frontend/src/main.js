@@ -430,6 +430,7 @@ function displayPatientAssignmentsListPopover(patientAssignments) {
       patientAssignmentBtn.disabled = true;
       const toolTip = document.createElement("calcite-tooltip");
       toolTip.innerHTML = "Please select at least 2 hospitals";
+      toolTip.placement = "left";
       toolTip.referenceElement = patientAssignmentBtn;
       document.body.appendChild(toolTip);
     }
