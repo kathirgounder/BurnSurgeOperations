@@ -484,41 +484,41 @@ function goBackToLanding() {
   for (const popover of popovers) {
     popover.remove();
   }
-  
+
   // Clear any existing alerts
   const alerts = document.querySelectorAll("calcite-alert");
   for (const alert of alerts) {
     alert.remove();
   }
-  
+
   // Clear any existing tables
   const tables = document.querySelectorAll("table");
   for (const table of tables) {
     table.remove();
   }
-  
+
   // Reset global variables
   window.selectedIncident = null;
   HOSPITALS_ARE_SELECTED = true;
   RESULTS_HAVE_LOADED = false;
   RESULTS_IS_LOADING = false;
-  
+
   // Reset hospital selections
   hospitals.forEach((hospital) => (hospitalSelections[hospital.name] = true));
   filteredHospitals = [];
-  
+
   // Clear route layer
   if (routeLayer) {
     routeLayer.removeAll();
   }
-  
+
   // Hide dashboard and show landing page
   const dashboardContainer = document.getElementById("dashboard-container");
   const landingPage = document.getElementById("landing-page");
-  
+
   dashboardContainer.classList.remove("active");
   landingPage.style.display = "flex";
-  
+
   // Force a page reload to properly reset the landing page
   window.location.reload();
 }
@@ -867,11 +867,11 @@ function displayGenerateReportPopover() {
       const assignments = patients.map((p) => {
         const scored = hospitals
           .map((h) => {
-            const minutes = routeByDest[h.name];
+            const r = routeByDest[h.name]; // need to parse the whole route object
             return {
               dest: h,
-              minutes: minutes,
-              score: computeScore({ minutes, dest: h, patient: p }),
+              minutes: r.minutes,
+              score: computeScore({ minutes: r.minutes, dest: h, patient: p }),
             };
           })
           .sort((a, b) => a.score - b.score);
@@ -883,10 +883,12 @@ function displayGenerateReportPopover() {
           severity: p.priority,
           patient: p,
           bestDest: scored[0].dest.name,
-          minutes: scored[0].minutes.minutes,
+          minutes: scored[0].minutes,
           score: scored[0].score,
         };
       });
+
+      console.log("Inside Generate Report Button Func", assignments);
 
       const jsonOutput = {
         incidentName: incident.name,
@@ -897,7 +899,7 @@ function displayGenerateReportPopover() {
           severity: r.severity,
           bestDest: r.bestDest,
           minutes: r.minutes,
-          score: r.score,
+          score: 10, //hardcoded to let the api work
         })),
         generatedAt: new Date().toISOString(),
       };
@@ -1005,10 +1007,7 @@ async function run() {
         .map((r) => [r.value.destName, r.value]) // destName came from solveODPair
     );
 
-    console.log(results);
-
-    console.log("travel by dest");
-    console.log(travelByDest);
+    console.log("Patients");
     console.log(patients);
     const assignments = patients.map((p) => {
       const scored = hospitals
@@ -1023,9 +1022,6 @@ async function run() {
           }
         })
         .sort((a, b) => a.score - b.score);
-
-      console.log("Scored");
-      console.log(scored);
 
       // Make a dictionary of destId and minutes pairs
       /* Travel Times from Incident to Destination Hospital 1 * 13 OD Matrix Essentially */
@@ -1059,6 +1055,7 @@ async function run() {
       };
     });
 
+    console.log("Inside Run Function");
     console.table(assignments);
 
     // results
@@ -1206,8 +1203,8 @@ function renderAssignmentsTable(rows) {
       </thead>
       <tbody>
         ${rows
-          .map(
-            (r) => `
+      .map(
+        (r) => `
           <tr>
             <td style="border:1px solid #ccc;padding:4px">${r.patientId}</td>
             <td style="border:1px solid #ccc;padding:4px">${r.severity}</td>
@@ -1215,8 +1212,8 @@ function renderAssignmentsTable(rows) {
             <td style="border:1px solid #ccc;padding:4px">${r.minutes}</td>
             <td style="border:1px solid #ccc;padding:4px">${r.score}</td>
           </tr>`
-          )
-          .join("")}
+      )
+      .join("")}
       </tbody>`;
   document.body.appendChild(tbl);
 }
@@ -1239,13 +1236,13 @@ function buildReportHTML(rows) {
       <table>
         <tr><th>Patient</th><th>Severity</th><th>Destination</th><th>Minutes</th><th>Score</th></tr>
         ${rows
-          .map(
-            (r) => `<tr>
+      .map(
+        (r) => `<tr>
           <td>${r.patientId}</td><td>${r.severity}</td><td>${r.bestDest}</td>
           <td>${r.minutes}</td><td>${r.score}</td>
         </tr>`
-          )
-          .join("")}
+      )
+      .join("")}
       </table>
       <p><em>Generated ${new Date().toLocaleString()}</em></p>
     </body></html>`;

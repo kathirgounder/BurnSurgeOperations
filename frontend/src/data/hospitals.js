@@ -209,7 +209,7 @@ export const hospitals = [
     type: "Burn Center",
     bedsAvailable: 0.008,
     capability: 5,
-    hasPedsUnit: false,
+    hasPedsUnit: true,
     hasTeleBurn: false,
   },
 ];
