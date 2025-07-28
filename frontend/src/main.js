@@ -192,11 +192,12 @@ createServiceArea({
   // 3. Create FeatureLayer
   serviceAreaFeatureLayer = new FeatureLayer({
     geometryType: "polygon",
+    titles: "serviceAreas",
     source: serviceAreaGraphics.map((g, idx) => {
       g.attributes = { ...g.attributes, ObjectId: idx + 1 };
       return g;
     }),
-    objectIdField: "ObjectId",
+    objectIdField: "ServiceArea",
     fields: serviceAreaFields,
     popupTemplate: {
       title: "Service Area",
@@ -394,7 +395,8 @@ const incidentFeatureLayer = new FeatureLayer({
     g.attributes = { ...g.attributes, ObjectId: idx + 1 };
     return g;
   }),
-  objectIdField: "ObjectId",
+  objectIdField: "generalHospitals",
+  title: "incident",
   fields: incidentFields,
   popupTemplate: {
     title: "{NAME}",
@@ -441,7 +443,7 @@ const sbcFeatureLayer = new FeatureLayer({
     g.attributes = { ...g.attributes, ObjectId: idx + 1 };
     return g;
   }),
-  objectIdField: "ObjectId",
+  objectIdField: "sbc",
   fields: hospitalFields,
   popupTemplate: {
     title: "{NAME} (Burn Center)",
@@ -475,7 +477,7 @@ const brcFeatureLayer = new FeatureLayer({
     g.attributes = { ...g.attributes, ObjectId: idx + 1 };
     return g;
   }),
-  objectIdField: "ObjectId",
+  objectIdField: "brc",
   fields: hospitalFields,
   popupTemplate: {
     title: "{NAME} (Resource Center)",
@@ -503,14 +505,25 @@ const brcFeatureLayer = new FeatureLayer({
   },
 });
 
+brcFeatureLayer.visible = false;
+sbcFeatureLayer.visible = false;
+
+// sbcFeatureLayer.opacity = 0.5;
+// brcFeatureLayer.opacity = 0.5;
+
 map.add(sbcFeatureLayer);
 map.add(brcFeatureLayer);
 
 map.add(incidentFeatureLayer);
 let generalHospitalsFeatureLayer;
 
+const legendDiv = document.createElement("div");
+legendDiv.id = "mini‑legend";
+view.ui.add(legendDiv, "bottom-left");
+
 const legend = new Legend({
   view: view,
+  container: legendDiv,
   layerInfos: [
     {
       layer: incidentFeatureLayer,
@@ -524,7 +537,9 @@ const legend = new Legend({
   ],
 });
 
-view.ui.add(legend, "bottom-left");
+legend.respectLayerVisibility = false;
+
+
 
 function queryHospitalsInServiceArea(
   serviceAreaPolygons,
@@ -624,7 +639,7 @@ function queryHospitalsInServiceArea(
       g.attributes = { ...g.attributes, ObjectId: idx + 1 };
       return g;
     }),
-    objectIdField: "ObjectId",
+    objectIdField: "generalHospitals",
     fields: generalHospitalsFields,
     popupTemplate: {
       title: "{NAME}",
@@ -1044,44 +1059,54 @@ function displayToggleLayersPopover() {
     layerSwitch.slot = "content-end";
     layerSwitch.checked = config.layers[0].visible;
     layerSwitch.addEventListener("calciteSwitchChange", () => {
-      config.layers.forEach((layer) => (layer.visible = layerSwitch.checked));
+      // `forEach` needs a *block* body ({}), not an expression wrapped in ()
+      config.layers.forEach((layer) => {
+        {
+          if (layer !== brcFeatureLayer || layer !== sbcFeatureLayer || layer !== generalHospitalsFeatureLayer){
+            layer.visible = layerSwitch.checked;
+          }
+        }
+      });
     });
+    
 
-    layerListItem.appendChild(layerSwitch);
-    listElement.appendChild(layerListItem);
+layerListItem.appendChild(layerSwitch);
+listElement.appendChild(layerListItem);
   });
 
-  panelElement.appendChild(listElement);
+panelElement.appendChild(listElement);
 
-  // Add "Toggle All" buttons
-  const buttonContainer = document.createElement("div");
-  buttonContainer.style.cssText = "display: flex; gap: 8px; padding: 8px;";
+// Add "Toggle All" buttons
+const buttonContainer = document.createElement("div");
+buttonContainer.style.cssText = "display: flex; gap: 8px; padding: 8px;";
 
-  const showAllBtn = document.createElement("calcite-button");
-  showAllBtn.innerHTML = "Show All";
-  showAllBtn.width = "half";
-  showAllBtn.onclick = () => {
-    layerConfigs.forEach((config) => {
-      config.layers.forEach((layer) => (layer.visible = true));
-      const switchElement = document.getElementById(config.id);
-      if (switchElement) switchElement.checked = true;
+const showAllBtn = document.createElement("calcite-button");
+showAllBtn.innerHTML = "Show All";
+showAllBtn.width = "half";
+showAllBtn.onclick = () => {
+  layerConfigs.forEach((config) => {
+    config.layers.forEach((layer) => {
+      layer.visible = true;
     });
-  };
+    const switchElement = document.getElementById(config.id);
+    if (switchElement) switchElement.checked = true;
+  });
+};
 
-  const hideAllBtn = document.createElement("calcite-button");
-  hideAllBtn.innerHTML = "Hide All";
-  hideAllBtn.width = "half";
-  hideAllBtn.onclick = () => {
-    layerConfigs.forEach((config) => {
-      config.layers.forEach((layer) => (layer.visible = false));
-      const switchElement = document.getElementById(config.id);
-      if (switchElement) switchElement.checked = false;
-    });
-  };
+const hideAllBtn = document.createElement("calcite-button");
+hideAllBtn.innerHTML = "Hide All";
+hideAllBtn.width = "half";
+hideAllBtn.onclick = () => {
+  layerConfigs.forEach((config) => {
+    config.layers.forEach((layer) => { layer.visible = false; });
+    const switchElement = document.getElementById(config.id);
+    if (switchElement) switchElement.checked = false;
+  });
+};
 
-  buttonContainer.appendChild(showAllBtn);
-  buttonContainer.appendChild(hideAllBtn);
-  panelElement.appendChild(buttonContainer);
+buttonContainer.appendChild(showAllBtn);
+buttonContainer.appendChild(hideAllBtn);
+panelElement.appendChild(buttonContainer);
 }
 
 addToggleLayersActionBtn();
@@ -1358,30 +1383,6 @@ async function run() {
     console.log("Inside Run Function");
     console.table(assignments);
 
-    // results
-    //   .filter(r => r.status === 'fulfilled')
-    //   .forEach(r => {
-    //     const { geometry, minutes } = r.value;
-    //     const patientIds = assignments
-    //      .filter(a => a.bestDest === r.value.destName)
-    //      .map(a => a.patientId)
-    //      .join(", ");
-    //     view.graphics.add({
-    //       geometry,
-    //       symbol: {
-    //        type: "simple-line",
-    //        width: 4,
-    //        color: minutes < 30 ? "green" : minutes < 45 ? "orange" : "red"
-    //      },
-    //      popupTemplate: {
-    //        title: `{minutes:numberFormat#0.0} min`,
-    //        content: "Patients on this route: {patientIds}"
-    //      }
-    //     });
-    //   });
-    renderAssignmentsTable(assignments);
-
-    // addReportButton(assignments); // This line is removed as per the new_code, as the report generation is now handled by the new addGenerateReportActionBtn
   }
 }
 
@@ -1505,7 +1506,7 @@ async function highlightRouteFor(row, btn) {
       g.attributes = { ...g.attributes, ObjectId: idx + 1 };
       return g;
     }),
-    objectIdField: "ObjectId",
+    objectIdField: "routes",
     fields: routeFields,
     popupTemplate: {
       title: "{destName}",
@@ -1592,65 +1593,4 @@ async function highlightRouteFor(row, btn) {
   // window.activeBtn = btn;
   // btn.style.background = "#007AC2";
   // btn.style.color = "#fff";
-}
-
-function renderAssignmentsTable(rows) {
-  const tbl = document.createElement("table");
-  tbl.style.cssText =
-    "border-collapse:collapse;margin:8px;font-family:sans-serif";
-  tbl.innerHTML = `
-      <thead>
-        <tr>
-          <th style="border:1px solid #ccc;padding:4px">Patient</th>
-          <th style="border:1px solid #ccc;padding:4px">Severity</th>
-          <th style="border:1px solid #ccc;padding:4px">Destination</th>
-          <th style="border:1px solid #ccc;padding:4px">Minutes</th>
-          <th style="border:1px solid #ccc;padding:4px">Score</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${rows
-          .map(
-            (r) => `
-          <tr>
-            <td style="border:1px solid #ccc;padding:4px">${r.patientId}</td>
-            <td style="border:1px solid #ccc;padding:4px">${r.severity}</td>
-            <td style="border:1px solid #ccc;padding:4px">${r.bestDest}</td>
-            <td style="border:1px solid #ccc;padding:4px">${r.minutes}</td>
-            <td style="border:1px solid #ccc;padding:4px">${r.score}</td>
-          </tr>`
-          )
-          .join("")}
-      </tbody>`;
-  document.body.appendChild(tbl);
-}
-
-/* -------- inline mini‑report -------- */
-function buildReportHTML(rows) {
-  return `
-    <html><head><title>${incident.name} – After‑Action</title>
-      <style>
-        body{font-family:sans-serif;padding:1rem}
-        table{border-collapse:collapse;width:100%}
-        td,th{border:1px solid #ccc;padding:4px}
-        th{background:#f5f5f5}
-      </style>
-    </head><body>
-      <h1>${incident.name}</h1>
-      <h3>${new Date(incident.datetime).toLocaleString()}</h3>
-      <p>${incident.notes}</p>
-      <h2>Patient Assignment</h2>
-      <table>
-        <tr><th>Patient</th><th>Severity</th><th>Destination</th><th>Minutes</th><th>Score</th></tr>
-        ${rows
-          .map(
-            (r) => `<tr>
-          <td>${r.patientId}</td><td>${r.severity}</td><td>${r.bestDest}</td>
-          <td>${r.minutes}</td><td>${r.score}</td>
-        </tr>`
-          )
-          .join("")}
-      </table>
-      <p><em>Generated ${new Date().toLocaleString()}</em></p>
-    </body></html>`;
 }

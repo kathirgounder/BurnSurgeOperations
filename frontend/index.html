@@ -1,23 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta
-      name="viewport"
-      content="initial-scale=1,maximum-scale=1,user-scalable=no"
-    />
-    <title>Burn Surge Operations - Landing Page</title>
 
-    <link
-      rel="stylesheet"
-      href="https://js.arcgis.com/4.33/esri/themes/light/main.css"
-    />
-    <script
-      type="module"
-      src="https://js.arcgis.com/calcite-components/3.2.1/calcite.esm.js"
-    ></script>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>Burn Surge Operations - Landing Page</title>
 
-    <script type="importmap">
+  <link rel="stylesheet" href="https://js.arcgis.com/4.33/esri/themes/light/main.css" />
+  <script type="module" src="https://js.arcgis.com/calcite-components/3.2.1/calcite.esm.js"></script>
+
+  <script type="importmap">
       {
         "imports": {
           "@arcgis/core/": "https://js.arcgis.com/4.33/@arcgis/core/"
@@ -25,133 +17,132 @@
       }
     </script>
 
-    <style>
-      html,
-      body {
-        height: 100%;
-        margin: 0;
-        padding: 0;
-        background-color: #000;
-        color: white;
-        font-family: Arial, sans-serif;
-      }
+  <style>
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background-color: #000;
+      color: white;
+      font-family: Arial, sans-serif;
+    }
 
-      .landing-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        height: 100vh;
-        text-align: center;
-      }
+    .landing-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      text-align: center;
+    }
 
-      .logo-placeholder {
-        width: 200px;
-        height: 200px;
-        background: linear-gradient(45deg, #333, #666);
-        border-radius: 20px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 40px;
-        border: 2px solid #444;
-      }
+    .logo-placeholder {
+      width: 200px;
+      height: 200px;
+      background: linear-gradient(45deg, #333, #666);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 40px;
+      border: 2px solid #444;
+    }
 
-      .logo-placeholder::before {
-        content: "LOGO";
-        font-size: 24px;
-        font-weight: bold;
-        color: #ccc;
-      }
+    .logo-placeholder::before {
+      content: "LOGO";
+      font-size: 24px;
+      font-weight: bold;
+      color: #ccc;
+    }
 
-      .title {
-        font-size: 2.5em;
-        margin-bottom: 20px;
-        color: white;
-      }
+    .title {
+      font-size: 2.5em;
+      margin-bottom: 20px;
+      color: white;
+    }
 
-      .subtitle {
-        font-size: 1.2em;
-        margin-bottom: 40px;
-        color: #ccc;
-      }
+    .subtitle {
+      font-size: 1.2em;
+      margin-bottom: 40px;
+      color: #ccc;
+    }
 
-      .controls {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 20px;
-        margin-bottom: 40px;
-      }
+    .controls {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 40px;
+    }
 
-      .incident-selector {
-        min-width: 300px;
-      }
+    .incident-selector {
+      min-width: 300px;
+    }
 
-      .dashboard-btn {
-        min-width: 200px;
-      }
+    .dashboard-btn {
+      min-width: 200px;
+    }
 
-      .hidden {
-        display: none !important;
-      }
+    .hidden {
+      display: none !important;
+    }
 
-      #viewDiv {
-        height: 100%;
-        margin: 0;
-        padding: 0;
-      }
+    #viewDiv {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
 
-      .dashboard-container {
-        height: 100vh;
-        display: none;
-      }
+    .dashboard-container {
+      height: 100vh;
+      display: none;
+    }
 
-      .dashboard-container.active {
-        display: block;
-      }
-    </style>
-  </head>
-  <body>
-    <!-- Landing Page -->
-    <div id="landing-page" class="landing-container">
-      <img src="images/logo.jpeg" height="60%"/>
-      <p class="subtitle">Emergency Response Planning & Patient Assignment</p>
-      
-      <div class="controls">
-        <calcite-select 
-          id="incident-select" 
-          class="incident-selector"
-          label="Select Incident"
-          placeholder="Choose an incident..."
-        >
-        </calcite-select>
-        
-        <calcite-button 
-          id="dashboard-btn" 
-          class="dashboard-btn"
-          appearance="solid"
-          color="blue"
-          width="full"
-        >
-          Launch Dashboard
-        </calcite-button>
-      </div>
+    #mini‑legend {
+      max-width: 180px;
+      /* adjust as needed */
+      max-height: 200px;
+      overflow: auto;
+      /* scroll if it overflows */
+      padding: 4px;
+      background: var(--calcite-ui-foreground-1);
+      border-radius: 4px;
+    }
+
+    .dashboard-container.active {
+      display: block;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Landing Page -->
+  <div id="landing-page" class="landing-container">
+    <img src="images/logo.jpeg" height="60%" />
+    <p class="subtitle">Emergency Response Planning & Patient Assignment</p>
+
+    <div class="controls">
+      <calcite-select id="incident-select" class="incident-selector" label="Select Incident"
+        placeholder="Choose an incident...">
+      </calcite-select>
+
+      <calcite-button id="dashboard-btn" class="dashboard-btn" appearance="solid" color="blue" width="full">
+        Launch Dashboard
+      </calcite-button>
     </div>
+  </div>
 
-    <!-- Dashboard Container -->
-    <div id="dashboard-container" class="dashboard-container">
-      <calcite-shell>
-        <div id="viewDiv"></div>
-        <calcite-action-bar
-          position="end"
-          slot="panel-end"
-          expanded="true"
-          id="burn-surge-ops-action-bar"
-        ></calcite-action-bar>
-      </calcite-shell>
-    </div>
+  <!-- Dashboard Container -->
+  <div id="dashboard-container" class="dashboard-container">
+    <calcite-shell>
+      <div id="viewDiv"></div>
+      <calcite-action-bar position="end" slot="panel-end" expanded="true"
+        id="burn-surge-ops-action-bar"></calcite-action-bar>
+    </calcite-shell>
+  </div>
 
-    <script type="module" src="/src/landing.js"></script>
-  </body>
+  <script type="module" src="/src/landing.js"></script>
+</body>
+
 </html>
