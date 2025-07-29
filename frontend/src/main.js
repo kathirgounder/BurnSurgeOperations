@@ -439,10 +439,10 @@ const hospitalFields = [
 // 3. Create FeatureLayers
 const sbcFeatureLayer = new FeatureLayer({
   geometryType: "point",
-  source: sbcGraphics.map((g, idx) => {
-    g.attributes = { ...g.attributes, ObjectId: idx + 1 };
-    return g;
-  }),
+  source: [], // sbcGraphics.map((g, idx) => {
+  //   g.attributes = { ...g.attributes, ObjectId: idx + 1 };
+  //   return g;
+  // }),
   objectIdField: "sbc",
   fields: hospitalFields,
   popupTemplate: {
@@ -473,10 +473,10 @@ const sbcFeatureLayer = new FeatureLayer({
 
 const brcFeatureLayer = new FeatureLayer({
   geometryType: "point",
-  source: brcGraphics.map((g, idx) => {
-    g.attributes = { ...g.attributes, ObjectId: idx + 1 };
-    return g;
-  }),
+  source: [], //brcGraphics.map((g, idx) => {
+  //   g.attributes = { ...g.attributes, ObjectId: idx + 1 };
+  //   return g;
+  // }),
   objectIdField: "brc",
   fields: hospitalFields,
   popupTemplate: {
@@ -1063,7 +1063,8 @@ function displayToggleLayersPopover() {
       // `forEach` needs a *block* body ({}), not an expression wrapped in ()
       config.layers.forEach((layer) => {
         {
-          if (layer !== brcFeatureLayer || layer !== sbcFeatureLayer || layer !== generalHospitalsFeatureLayer){
+          if (layer != brcFeatureLayer || layer != sbcFeatureLayer || layer !== generalHospitalsFeatureLayer){
+            console.log("Feature Layer", layer);
             layer.visible = layerSwitch.checked;
           }
         }
