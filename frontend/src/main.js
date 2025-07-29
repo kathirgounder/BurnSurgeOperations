@@ -396,7 +396,7 @@ const incidentFeatureLayer = new FeatureLayer({
     return g;
   }),
   objectIdField: "generalHospitals",
-  title: "incident",
+  title: "Incident",
   fields: incidentFields,
   popupTemplate: {
     title: "{NAME}",
@@ -669,9 +669,10 @@ function queryHospitalsInServiceArea(
   generalHospitalsFeatureLayer.visible = false;
   legend.layerInfos.push({
     layer: generalHospitalsFeatureLayer,
+    title: "General Hospitals within Service Area"
   });
   // layerConfigs[2].layers.push(generalHospitalsFeatureLayer);
-  map.add(generalHospitalsFeatureLayer);
+  map.add(generalHospitalsFeatureLayer, 0);
 }
 
 function expandPatients(manifest, templates) {
