@@ -74,6 +74,7 @@ const CustomLayerView2D = BaseLayerViewGL2D.createSubclass({
 
 uniform float u_current_time;          // seconds since load
 varying vec2  v_offset;                // (‑0.5 … +0.5)
+
 uniform vec3 u_core_color;
 uniform vec3 u_glow_color;
 uniform float u_pulse_freq;
@@ -84,12 +85,7 @@ uniform float u_spark_freq;
 uniform float u_size_px;
 
 // ── STYLE PARAMETERS ─────────────────────────────────────────────
-const float SIZE_PX      = 70.0;           // ↔ must match vertex SIZE
-const float CORE_RADIUS  =  4.0;           // px  (was 6)
-const float GLOW_RADIUS  = 16.0;           // px  (slightly tighter)
 
-const vec3  CORE_COLOR   = vec3(1.00, 0.25, 0.25);   // hot red
-const vec3  GLOW_COLOR   = vec3(0.85, 0.10, 0.10);   // deep crimson
 const float PULSE_FREQ   = 2.0;            // Hz  – gentle breathing
 const float PULSE_AMPL   = 0.20;           // 0–1 brightness swing
 const float SPARK_AMPL   = 0.10;           // residual “static” (now subtle)
