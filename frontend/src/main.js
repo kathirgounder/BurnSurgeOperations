@@ -505,6 +505,7 @@ const brcFeatureLayer = new FeatureLayer({
   },
 });
 
+incidentFeatureLayer.visible = false;
 brcFeatureLayer.visible = false;
 sbcFeatureLayer.visible = false;
 
